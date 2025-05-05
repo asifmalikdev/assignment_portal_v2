@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+
+    <h1 class="text-center mb-4">Admin Dashboard</h1>
+
+    <!-- Add Buttons -->
+    <div class="d-flex justify-content-end mb-3 gap-2">
+        <button class="btn btn-primary shadow" data-bs-toggle="modal" data-bs-target="#addDistrictModal">Add District</button>
+        <button class="btn btn-success shadow" data-bs-toggle="modal" data-bs-target="#addSchoolModal">Add School</button>
+        <button class="btn btn-warning shadow" data-bs-toggle="modal" data-bs-target="#addClassModal">Add Class</button>
+    </div>
+
+    <!-- Districts Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Districts</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="mb-3 d-flex gap-2">
+                <input type="text" name="district_search" class="form-control" placeholder="Search District" value="{{ request.GET.district_search }}">
+                <button type="submit" class="btn btn-outline-primary">Search</button>
+            </form>
+            <table class="table table-bordered table-hover table-striped">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Is Active</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for district in districts %}
+                    <tr>
+                        <td>{{ district.id }}</td>
+                        <td><a href="{% url 'admin_dashboard' %}?district_id={{ district.id }}">{{ district.name }}</a></td>
+                        <td>{{ district.is_active }}</td>
+                        <td><a href="{% url 'delete_district' district.id %}" class="btn btn-sm btn-danger">Delete</a></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center">No District Found</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Schools Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Schools {% if selected_district_id %}(Filtered by District ID {{ selected_district_id }}){% endif %}</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="mb-3 d-flex gap-2">
+                <input type="text" name="school_search" class="form-control" placeholder="Search School" value="{{ request.GET.school_search }}">
+                <button type="submit" class="btn btn-outline-success">Search</button>
+            </form>
+            <table class="table table-bordered table-hover table-striped">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>District</th>
+                        <th>Address</th>
+                        <th>Principal</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for school in schools %}
+                    <tr>
+                        <td>{{ school.id }}</td>
+                        <td><a href="{% url 'admin_dashboard' %}?school_id={{ school.id }}&district_id={{ school.district.id }}">{{ school.name }}</a></td>
+                        <td>{{ school.district.name }}</td>
+                        <td>{{ school.address }}</td>
+                        <td>{{ school.principal }}</td>
+                        <td><a href="{% url 'delete_school' school.id %}" class="btn btn-sm btn-danger">Delete</a></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center">No Schools Found</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Classes Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">Classes {% if selected_school_id %}(Filtered by School ID {{ selected_school_id }}){% endif %}</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="mb-3 d-flex gap-2">
+                <input type="text" name="class_search" class="form-control" placeholder="Search Class" value="{{ request.GET.class_search }}">
+                <button type="submit" class="btn btn-outline-warning">Search</button>
+            </form>
+            <table class="table table-bordered table-hover table-striped">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Grade Level</th>
+                        <th>Teacher</th>
+                        <th>Is Active</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for class_ in classes %}
+                    <tr>
+                        <td>{{ class_.id }}</td>
+                        <td>
+                            <!-- Modal trigger -->
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#classDetailModal{{ class_.id }}">
+                                {{ class_.name }}
+                            </a>
+                        </td>
+                        <td>{{ class_.grade_level }}</td>
+                        <td>{{ class_.assigned_teacher.get_full_name }}</td>
+                        <td>{{ class_.is_active }}</td>
+                        <td><a href="{% url 'delete_class' class_.id %}" class="btn btn-sm btn-danger">Delete</a></td>
+                    </tr>
+
+                    <!-- Class Detail Modal -->
+                    <div class="modal fade" id="classDetailModal{{ class_.id }}" tabindex="-1" aria-labelledby="classDetailModalLabel{{ class_.id }}" aria-hidden="true">
+                      <div class="modal-dialog">
+                        <div class="modal-content shadow-lg">
+                          <div class="modal-header bg-info text-white">
+                            <h5 class="modal-title" id="classDetailModalLabel{{ class_.id }}">Class Details: {{ class_.name }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                              <p><strong>Grade Level:</strong> {{ class_.grade_level }}</p>
+                              <p><strong>Assigned Teacher:</strong> {{ class_.assigned_teacher.get_full_name }} ({{ class_.assigned_teacher.username }})</p>
+                              <hr>
+                              <p><strong>Students:</strong></p>
+                              {% if class_.students.all %}
+                                  <ul>
+                                      {% for stu in class_.students.all %}
+                                      <li>{{ stu.get_full_name }} ({{ stu.username }})</li>
+                                      {% endfor %}
+                                  </ul>
+                              {% else %}
+                                  <p>No students yet.</p>
+                              {% endif %}
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center">No Classes Found</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Add District Modal -->
+<div class="modal fade" id="addDistrictModal" tabindex="-1" aria-labelledby="addDistrictModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="addDistrictModalLabel">Add District</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST">
+        {% csrf_token %}
+        <div class="modal-body">
+            {{ district_form.as_p }}
+        </div>
+        <div class="modal-footer">
+          <button type="submit" name="add_district" class="btn btn-primary">Add</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Add School Modal -->
+<div class="modal fade" id="addSchoolModal" tabindex="-1" aria-labelledby="addSchoolModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="addSchoolModalLabel">Add School</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST">
+        {% csrf_token %}
+        <div class="modal-body">
+            {{ school_form.as_p }}
+        </div>
+        <div class="modal-footer">
+          <button type="submit" name="add_school" class="btn btn-success">Add</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Add Class Modal -->
+<div class="modal fade" id="addClassModal" tabindex="-1" aria-labelledby="addClassModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title" id="addClassModalLabel">Add Class</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST">
+        {% csrf_token %}
+        <div class="modal-body">
+            {{ class_from.as_p }}
+        </div>
+        <div class="modal-footer">
+          <button type="submit" name="add_class" class="btn btn-warning">Add</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
