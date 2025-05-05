@@ -1,5 +1,7 @@
 from django.contrib.auth import login, logout
 from django.shortcuts import redirect, render, get_object_or_404
+
+from assignments.models import AssignmentQuestion
 from users.decorators import teacher_required, student_required, admin_required
 from users.forms import UserLoginForm, TeacherSignupForm, StudentSignupForm, AdminSignupForm
 from django.contrib.auth import authenticate
@@ -71,13 +73,14 @@ def signup_student(request):
 
 from school.models import District, School, ClassRoom
 from school.forms import DistrictForm, SchoolForm, ClassForm
-
+from assignments.models import AssignmentQuestion
 
 @teacher_required
 def teacher_dashboard(request):
-
+    assi = AssignmentQuestion.objects.all()
+    for ass in assi:
+        print(ass.text)
     return render(request, 'teacher_dashboard.html')
-
 @student_required
 def student_dashboard(request):
     return render(request, 'student_dashboard.html')

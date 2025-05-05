@@ -26,5 +26,7 @@ class ClassAdmin(admin.ModelAdmin):
         students = obj.students.all()
         if not students:
             return "no students yet"
-        return " , ".join([f" {stu.get_full_name()} ({stu.username})" for stu in students])
+        return " , ".join([stu.get_full_name() for stu in students])
+
     students_list.short_description = "Students"
+

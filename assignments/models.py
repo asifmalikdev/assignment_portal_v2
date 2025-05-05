@@ -1,3 +1,84 @@
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.contrib.auth import get_user_model
+from django.db.models import CASCADE
+from school.models import ClassRoom
+from django.utils import timezone
 
-# Create your models here.
+User = get_user_model()
+
+
+class AssignmentQuestion(models.Model):
+    QUESTION_TYPE_CHOICES=[
+        ('LONG', 'Long Question'),
+        ('SHORT', 'Short Question'),
+        ('MCQ', 'Multiple Choice')
+    ]
+
+    teacher = models.ForeignKey(
+        User,
+        on_delete= CASCADE,
+        limit_choices_to={'role': 'teacher'},
+        related_name= 'questions'
+    )
+    assigned_class = models.ForeignKey(ClassRoom, on_delete=CASCADE, related_name='questions')
+    text = models.TextField()
+    question_type = models.CharField(max_length=5, choices = QUESTION_TYPE_CHOICES)
+    marks = models.PositiveIntegerField()
+
+    option_a = models.CharField(max_length = 255, blank = True, null = True)
+    option_b = models.CharField(max_length=255, blank=True, null=True)
+    option_c = models.CharField(max_length=255, blank=True, null=True)
+    option_d = models.CharField(max_length=255, blank=True, null=True)
+
+    correct_option = models.CharField(
+        max_length=1,
+        choices = [('a','A'), ('b', 'B'), ('c', 'C'), ('d', 'D')],
+        null=True,
+        blank=True,
+
+
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        if self.question_type == 'MCQ':
+            if not all([self.option_a, self.option_b, self.option_c, self.option_d, self.correct_option]):
+                raise ValidationError("All options and Correct answers must be provided")
+        if self.question_type in ['LONG', 'SHORT']:
+            if any([self.option_a, self.option_b, self.option_c, self.option_d, self.correct_option]):
+                raise ValidationError("Options are only allowed for MCQ")
+
+        if not self.teacher.teaching_classes.filter(pk=self.assigned_class.pk).exists():
+            raise ValidationError("This teacher is not assigned to the selected class.")
+
+    def __str__(self):
+        return f"{self.text[:30]} - {self.get_question_type_display()} ({self.assigned_class.name})"
+
+def validate_due_date(value):
+    if value < timezone.now().date():
+        raise ValidationError("Due date can't be in the past.")
+
+
+
+# class Assignment(models.Model):
+#     title = models.CharField(max_length=255, verbose_name='Title')
+#     description = models.TextField(verbose_name='Description', blank=True, null=True)
+#     due_date = models.DateTimeField(validators=[validate_due_date])
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     assigned_by = models.ForeignKey(
+#         User,
+#         on_delete=CASCADE,
+#         limit_choices_to={'role': 'teacher'},
+#         related_name='questions'
+#     )
+#     assigned_class = models.ForeignKey(ClassRoom, on_delete=CASCADE, related_name='questions')
+#     questions = models.ManyToManyField(
+#         AssignmentQuestion,
+#         through = 'AssignmentQuestionThrough',
+#         related_name = 'assignments'
+#     )
+    # def clean(self):
+    #     if self.assigned_by and self.assigned_class:
+    #         if not self.assigned_by:
+    #             pass
