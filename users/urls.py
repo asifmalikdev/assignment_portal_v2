@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .views import TeacherDashboardView
 
 urlpatterns = [
     path('login/', views.login_view, name='login'),
@@ -7,11 +8,12 @@ urlpatterns = [
     path('signup/admin', views.signup_admin, name = 'signup_admin'),
     path('signup/teacher/', views.signup_teacher, name='signup_teacher'),
     path('signup/student/', views.signup_student, name='signup_student'),
-    path('teacher/dashboard/', views.teacher_dashboard, name='teacher_dashboard'),
+    path('teacher/dashboard/', TeacherDashboardView.as_view(), name='teacher_dashboard'),
     path('student/dashboard/', views.student_dashboard, name='student_dashboard'),
     path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('delete_district/<int:district_id>/', views.delete_district, name='delete_district'),
     path('delete_school/<int:school_id>/', views.delete_school, name='delete_school'),
-
+    path('assignment/delete/<int:pk>/', views.delete_assignment, name='delete_assignment'),
+    path('question/delete/<int:pk>/', views.delete_question, name='delete_question'),
 
 ]

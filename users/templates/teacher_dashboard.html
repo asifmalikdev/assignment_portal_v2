@@ -1,6 +1,150 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1>Welcome, Teacher!</h1>
-    <p>Here you can manage your assignments and classes.</p>
+<div class="container py-5">
+    <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-header bg-gradient text-white rounded-top-4"
+             style="background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);">
+            <h2 class="text-center mb-0">🎓 Welcome, Teacher!</h2>
+        </div>
+        <div class="card-body bg-light rounded-bottom-4">
+            <p class="text-center fs-5">Manage your assignments and classes efficiently.</p>
+
+            <div class="table-responsive mb-4">
+                <table class="table table-hover table-bordered rounded-4 overflow-hidden shadow-sm bg-white">
+                    <thead class="table-primary text-center">
+                    <tr>
+                        <th scope="col">👤 Name</th>
+                        <th scope="col">📧 Email</th>
+                        <th scope="col">🏫 Total Classes</th>
+                    </tr>
+                    </thead>
+                    <tbody class="text-center">
+                    <tr>
+                        <td>{{ name_is }}</td>
+                        <td>{{ email_is }}</td>
+                        <td>{{ total_classes }}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 class="mb-3">📚 Teacher Dashboard</h2>
+
+            <!-- Class Filter -->
+            <form method="get" class="mb-4">
+                <label class="form-label">Filter by Class:</label>
+                <select class="form-select w-auto d-inline-block" name="class_id" onchange="this.form.submit()">
+                    <option value="">All</option>
+                    {% for cls in classes %}
+                        <option value="{{ cls.id }}" {% if cls.id|stringformat:"s" == selected_class_id %}selected{% endif %}>
+                            {{ cls.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+
+            <!-- Create Question -->
+            <h3>➕ Create Question</h3>
+            <form method="post" class="mb-4">
+                {% csrf_token %}
+                {{ question_form.as_p }}
+                <input name="action" type="hidden" value="create_question">
+                <button class="btn btn-success" type="submit">Add Question</button>
+            </form>
+
+            <!-- Questions List -->
+            <h3>📌 Questions</h3>
+            <ul class="list-group mb-4">
+                {% for q in questions %}
+                    <li class="list-group-item">
+                        <div id="question-display-{{ q.id }}">
+                            {{ q.text }} - {{ q.get_question_type_display }} ({{ q.assigned_class.name }})
+                            <button class="btn btn-sm btn-outline-primary ms-2" onclick="toggleEditForm('{{ q.id }}', 'question')">Edit</button>
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete_question">
+                                <input type="hidden" name="question_id" value="{{ q.id }}">
+                                <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                            </form>
+                        </div>
+                        <div id="question-edit-form-{{ q.id }}" style="display:none;">
+                            <form method="post" class="mt-2">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="edit_question">
+                                <input type="hidden" name="question_id" value="{{ q.id }}">
+                                <input class="form-control mb-2" type="text" name="text" value="{{ q.text }}">
+                                <select class="form-select mb-2" name="question_type">
+                                    <option value="MCQ" {% if q.question_type == 'MCQ' %}selected{% endif %}>MCQ</option>
+                                    <option value="Short" {% if q.question_type == 'Short' %}selected{% endif %}>Short</option>
+                                </select>
+                                <select class="form-select mb-2" name="assigned_class">
+                                    {% for cls in classes %}
+                                        <option value="{{ cls.id }}" {% if cls == q.assigned_class %}selected{% endif %}>{{ cls.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button class="btn btn-sm btn-primary" type="submit">Save</button>
+                            </form>
+                        </div>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item text-muted">No questions available.</li>
+                {% endfor %}
+            </ul>
+
+            <!-- Create Assignment -->
+            <h3>➕ Create Assignment</h3>
+            <form method="post" class="mb-4">
+                {% csrf_token %}
+                {{ assignment_form.as_p }}
+                <input name="action" type="hidden" value="create_assignment">
+                <button class="btn btn-success" type="submit">Add Assignment</button>
+            </form>
+
+            <!-- Assignments List -->
+            <h3>📝 Assignments</h3>
+            <ul class="list-group">
+                {% for a in assignments %}
+                    <li class="list-group-item">
+                        <div id="assignment-display-{{ a.id }}">
+                            {{ a.title }} - {{ a.assigned_class.name }}
+                            <button class="btn btn-sm btn-outline-primary ms-2" onclick="toggleEditForm('{{ a.id }}', 'assignment')">Edit</button>
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete_assignment">
+                                <input type="hidden" name="assignment_id" value="{{ a.id }}">
+                                <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                            </form>
+                        </div>
+                        <div id="assignment-edit-form-{{ a.id }}" style="display:none;">
+                            <form method="post" class="mt-2">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="edit_assignment">
+                                <input type="hidden" name="assignment_id" value="{{ a.id }}">
+                                <input class="form-control mb-2" type="text" name="title" value="{{ a.title }}">
+                                <textarea class="form-control mb-2" name="description">{{ a.description }}</textarea>
+                                <input class="form-control mb-2" type="date" name="due_date" value="{{ a.due_date|date:"Y-m-d" }}">
+                                <select class="form-select mb-2" name="assigned_class">
+                                    {% for cls in classes %}
+                                        <option value="{{ cls.id }}" {% if cls == a.assigned_class %}selected{% endif %}>{{ cls.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button class="btn btn-sm btn-primary" type="submit">Save</button>
+                            </form>
+                        </div>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item text-muted">No assignments available.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleEditForm(id, type) {
+        document.getElementById(`${type}-display-${id}`).style.display = 'none';
+        document.getElementById(`${type}-edit-form-${id}`).style.display = 'block';
+    }
+</script>
 {% endblock %}

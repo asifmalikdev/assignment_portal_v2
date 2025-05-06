@@ -214,7 +214,7 @@
       <form method="POST">
         {% csrf_token %}
         <div class="modal-body">
-            {{ class_from.as_p }}
+            {{ class_form.as_p }}
         </div>
         <div class="modal-footer">
           <button type="submit" name="add_class" class="btn btn-warning">Add</button>

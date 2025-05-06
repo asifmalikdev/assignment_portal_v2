@@ -71,7 +71,6 @@ class Assignment(models.Model):
         on_delete=CASCADE,
         limit_choices_to={'role': 'teacher'},
         related_name='assignments',
-        default=17,
         blank=True,
         null=True
 

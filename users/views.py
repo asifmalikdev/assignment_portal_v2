@@ -1,10 +1,17 @@
 from django.contrib.auth import login, logout
+from django.http import  HttpResponse
 from django.shortcuts import redirect, render, get_object_or_404
-
-from assignments.models import AssignmentQuestion
+from django.contrib import messages
+from django.utils.decorators import method_decorator
+from django.views import View
+from school.models import District, School, ClassRoom
+from school.forms import DistrictForm, SchoolForm, ClassForm
 from users.decorators import teacher_required, student_required, admin_required
 from users.forms import UserLoginForm, TeacherSignupForm, StudentSignupForm, AdminSignupForm
 from django.contrib.auth import authenticate
+from assignments.models import Assignment, AssignmentQuestion, AssignmentQuestionThrough
+from assignments.forms import AssignmentForm, AssignmentQuestionThroughForm, AssignmentQuestionInLineForm
+
 
 def validate_user(email, password):
     user = authenticate(username=email, password=password)
@@ -15,7 +22,6 @@ def validate_user(email, password):
 
 def login_view(request):
     if request.method == 'POST':
-        print('hello asif he')
         email = request.POST.get('email')
         password = request.POST.get('password')
         user = validate_user(email, password)
@@ -71,16 +77,124 @@ def signup_student(request):
     return render(request, 'signup.html',{'form': form, 'role':'Student'})
 
 
-from school.models import District, School, ClassRoom
-from school.forms import DistrictForm, SchoolForm, ClassForm
-from assignments.models import AssignmentQuestion
 
-@teacher_required
-def teacher_dashboard(request):
-    assi = AssignmentQuestion.objects.all()
-    for ass in assi:
-        print(ass.text)
-    return render(request, 'teacher_dashboard.html')
+
+def teacher_basic_info(request):
+    role_is = request.user.role
+    name_is = request.user.full_name
+    email_is = request.user.email
+    all_classes_of_teacher = ClassRoom.objects.filter(assigned_teacher__email__iexact=email_is)
+    temp = 0
+    for class_ in all_classes_of_teacher:
+        temp += 1
+    return name_is, email_is, temp
+
+@method_decorator(teacher_required, name='dispatch')
+class TeacherDashboardView(View):
+    template_name = 'teacher_dashboard.html'
+
+    def get(self, request):
+        if request.user.role !='teacher':
+            return HttpResponse("this moduel is only for teacher")
+        name_is, email_is, temp = teacher_basic_info(request)
+
+
+        class_filter = request.GET.get('class_id')
+        classes = request.user.teaching_classes.all()
+
+        if class_filter:
+            question = AssignmentQuestion.objects.filter(teacher = request.user, assigned_class__id = class_filter)
+            assignments = Assignment.objects.filter(teacher = request.user, assigne_class__id = class_filter)
+        else:
+            questions = AssignmentQuestion.objects.filter(teacher = request.user)
+            assignments = Assignment.objects.filter(teacher=request.user)
+
+
+        context = {
+            'classes': classes,
+            'selected_class_id':class_filter,
+            "assignment_form": AssignmentForm(request = request),
+            'question_form' : AssignmentQuestionInLineForm(),
+            'assignments' : assignments,
+            'questions': questions,
+            "name_is": name_is,
+            "email_is": email_is,
+            'total_classes': temp
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        action = request.POST.get('action')
+
+        if action == 'create_question':
+            form = AssignmentQuestionInLineForm(request.POST)
+            if form.is_valid():
+                question = form.save(commit=False)
+                question.teacher = request.user
+                question.save()
+                messages.success(request, "Question created successfully.")
+            else:
+                messages.error(request, "Error creating question.")
+
+
+        elif action == 'edit_question':
+            question_id = request.POST.get('question_id')
+            question = get_object_or_404(AssignmentQuestion, id=question_id, teacher=request.user)
+            form = AssignmentQuestionInLineForm(request.POST, instance=question)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Question updated.")
+            else:
+                messages.error(request, "Error updating question.")
+
+
+        elif action == 'delete_question':
+            question_id = request.POST.get('question_id')
+            question = get_object_or_404(AssignmentQuestion, id=question_id, teacher=request.user)
+            question.delete()
+            messages.success(request, "Question deleted.")
+
+        elif action == 'create_assignment':
+            form = AssignmentForm(request.POST, request=request)
+            if form.is_valid():
+                assignment = form.save()
+                messages.success(request, "Assignment created.")
+            else:
+                messages.error(request, "Error creating assignment.")
+
+
+        elif action == 'edit_assignment':
+            assignment = get_object_or_404(Assignment, id=request.POST.get('assignment_id'), teacher=request.user)
+            form = AssignmentForm(request.POST, instance=assignment, request=request)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Assignment updated.")
+            else:
+                messages.error(request, "Error updating assignment.")
+
+
+        elif action == 'delete_assignment':
+            assignment_id = request.POST.get('assignment_id')
+            assignment = get_object_or_404(Assignment, id=assignment_id, teacher=request.user)
+            assignment.delete()
+            messages.success(request, "Assignment deleted.")
+
+        return redirect('teacher_dashboard')
+
+def delete_assignment(request, pk):
+    assignment = get_object_or_404(Assignment, pk=pk, teacher=request.user)
+    assignment.delete()
+    messages.success(request, 'Assignment deleted.')
+    return redirect('teacher_dashboard')
+def delete_question(request, pk):
+    question = get_object_or_404(AssignmentQuestion, pk=pk, teacher=request.user)
+    question.delete()
+    messages.success(request, 'Question deleted.')
+    return redirect('teacher_dashboard')
+
+
+
+
 @student_required
 def student_dashboard(request):
     return render(request, 'student_dashboard.html')
@@ -91,7 +205,7 @@ def admin_dashboard(request):
     classes = ClassRoom.objects.all()
     district_form = DistrictForm()
     school_form = SchoolForm()
-    class_from = ClassForm
+    class_form = ClassForm()
     district_search_query = request.GET.get('district_search')
     if district_search_query:
         districts = districts.filter(name__icontain=district_search_query)
@@ -136,7 +250,7 @@ def admin_dashboard(request):
         'school_form': school_form,
         'selected_district_id':selected_district_id,
         'classes': classes,
-        'class_from': class_from,
+        'class_form': class_form,
         'selected_school_id': selected_school_id
     }
     return render(request, 'admin_dashboard.html', context)
