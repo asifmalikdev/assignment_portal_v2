@@ -56,29 +56,47 @@ class AssignmentQuestion(models.Model):
         return f"{self.text[:30]} - {self.get_question_type_display()} ({self.assigned_class.name})"
 
 def validate_due_date(value):
-    if value < timezone.now().date():
+    if value < timezone.now():
         raise ValidationError("Due date can't be in the past.")
 
 
 
-# class Assignment(models.Model):
-#     title = models.CharField(max_length=255, verbose_name='Title')
-#     description = models.TextField(verbose_name='Description', blank=True, null=True)
-#     due_date = models.DateTimeField(validators=[validate_due_date])
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     assigned_by = models.ForeignKey(
-#         User,
-#         on_delete=CASCADE,
-#         limit_choices_to={'role': 'teacher'},
-#         related_name='questions'
-#     )
-#     assigned_class = models.ForeignKey(ClassRoom, on_delete=CASCADE, related_name='questions')
-#     questions = models.ManyToManyField(
-#         AssignmentQuestion,
-#         through = 'AssignmentQuestionThrough',
-#         related_name = 'assignments'
-#     )
+class Assignment(models.Model):
+    title = models.CharField(max_length=255, verbose_name='Title')
+    description = models.TextField(verbose_name='Description', blank=True, null=True)
+    due_date = models.DateTimeField(validators=[validate_due_date])
+    created_at = models.DateTimeField(auto_now_add=True)
+    teacher = models.ForeignKey(
+        User,
+        on_delete=CASCADE,
+        limit_choices_to={'role': 'teacher'},
+        related_name='assignments',
+        default=17,
+        blank=True,
+        null=True
+
+    )
+    assigned_class = models.ForeignKey(
+        ClassRoom,
+        on_delete=CASCADE,
+        related_name='assignments')
+    questions = models.ManyToManyField(
+        AssignmentQuestion,
+        through = 'AssignmentQuestionThrough',
+        related_name = 'assignments'
+    )
     # def clean(self):
-    #     if self.assigned_by and self.assigned_class:
-    #         if not self.assigned_by:
-    #             pass
+    #     if not self.teacher.teaching_classes.filter(pk = self.assigned_class.pk).exists():
+    #         raise ValidationError("this teacher is not assigned to the selected class")
+
+    def __str__(self):
+        return f"{self.title}({self.assigned_class.name})"
+
+class AssignmentQuestionThrough(models.Model):
+    assignment = models.ForeignKey(Assignment, on_delete=CASCADE)
+    question = models.ForeignKey(AssignmentQuestion, on_delete=CASCADE)
+    # Optional: order or custom mark settings
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        unique_together = ('assignment', 'question')

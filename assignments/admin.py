@@ -1,8 +1,29 @@
 from django.contrib import admin
 from rest_framework.exceptions import PermissionDenied
+from .models import AssignmentQuestion, AssignmentQuestionThrough, Assignment
+from .forms import AssignmentForm, AssignmentQuestionThroughInlineFormset
 
-from .models import AssignmentQuestion
-from django import forms
+
+class AssignmentQuestionInline(admin.TabularInline):
+    model = AssignmentQuestionThrough
+    formset = AssignmentQuestionThroughInlineFormset
+    extra = 1
+
+
+@admin.register(Assignment)
+class AssignmentAdmin(admin.ModelAdmin):
+    form = AssignmentForm
+    inlines = [AssignmentQuestionInline]
+    list_display = ('title', 'teacher', 'assigned_class', 'due_date', 'created_at')
+    search_fields = ('title',)
+    list_filter = ('teacher', 'assigned_class')
+
+    def save_model(self, request, obj, form, change):
+        if not obj.teacher_id and not request.user.is_superuser:
+            obj.teacher = request.user
+        obj.full_clean()
+        super().save_model(request, obj, form, change)
+
 
 @admin.register(AssignmentQuestion)
 class AssignmentQuestionAdmin(admin.ModelAdmin):
@@ -18,12 +39,7 @@ class AssignmentQuestionAdmin(admin.ModelAdmin):
         return qs
 
     def save_model(self, request, obj, form, change):
-        if not request.user.is_superuser:
-            if request.user.role != 'teacher':
-                raise PermissionDenied("Only teachers can create assignment questions.")
-            if not obj.teacher_id:
-                obj.teacher = request.user
+        if not obj.teacher_id and not request.user.is_superuser:
+            obj.teacher = request.user
         obj.full_clean()
         super().save_model(request, obj, form, change)
-
-
