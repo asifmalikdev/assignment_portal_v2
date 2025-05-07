@@ -1,13 +1,15 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import inlineformset_factory
+
+from school.models import ClassRoom
 from .models import Assignment, AssignmentQuestion, AssignmentQuestionThrough
 
 
 class AssignmentQuestionInLineForm(forms.ModelForm):
     class Meta:
         model = AssignmentQuestion
-        fields = "__all__"
+        fields = ('assigned_class', 'text', 'question_type', 'marks', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_option')
 
     def clean(self):
         cleaned_data = super().clean()
@@ -21,7 +23,19 @@ class AssignmentQuestionInLineForm(forms.ModelForm):
                 if cleaned_data.get(option_field):
                     self.add_error(option_field, 'Options are only allowed for MCQ type questions.')
         return cleaned_data
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.fields['assigned_class'].queryset = ClassRoom.objects.filter(assigned_teacher=user)
 
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self.user:
+            instance.teacher = self.user
+        if commit:
+            instance.save()
+        return instance
 
 class AssignmentForm(forms.ModelForm):
     class Meta:

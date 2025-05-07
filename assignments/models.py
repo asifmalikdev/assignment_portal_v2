@@ -49,8 +49,8 @@ class AssignmentQuestion(models.Model):
             if any([self.option_a, self.option_b, self.option_c, self.option_d, self.correct_option]):
                 raise ValidationError("Options are only allowed for MCQ")
 
-        if not self.teacher.teaching_classes.filter(pk=self.assigned_class.pk).exists():
-            raise ValidationError("This teacher is not assigned to the selected class.")
+        # if not self.teacher.teaching_classes.filter(pk=self.assigned_class.pk).exists():
+        #     raise ValidationError("This teacher is not assigned to the selected class.")
 
     def __str__(self):
         return f"{self.text[:30]} - {self.get_question_type_display()} ({self.assigned_class.name})"

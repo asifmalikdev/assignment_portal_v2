@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block content %}
 <div class="container py-5">
@@ -10,13 +11,14 @@
         <div class="card-body bg-light rounded-bottom-4">
             <p class="text-center fs-5">Manage your assignments and classes efficiently.</p>
 
+            <!-- Teacher Info Table -->
             <div class="table-responsive mb-4">
                 <table class="table table-hover table-bordered rounded-4 overflow-hidden shadow-sm bg-white">
                     <thead class="table-primary text-center">
                     <tr>
-                        <th scope="col">👤 Name</th>
-                        <th scope="col">📧 Email</th>
-                        <th scope="col">🏫 Total Classes</th>
+                        <th>👤 Name</th>
+                        <th>📧 Email</th>
+                        <th>🏫 Total Classes</th>
                     </tr>
                     </thead>
                     <tbody class="text-center">
@@ -29,24 +31,21 @@
                 </table>
             </div>
 
+            <!-- Filter -->
             <h2 class="mb-3">📚 Teacher Dashboard</h2>
-
-            <!-- Class Filter -->
-            <form method="get" class="mb-4">
+            <form class="mb-4" method="get">
                 <label class="form-label">Filter by Class:</label>
                 <select class="form-select w-auto d-inline-block" name="class_id" onchange="this.form.submit()">
                     <option value="">All</option>
                     {% for cls in classes %}
-                        <option value="{{ cls.id }}" {% if cls.id|stringformat:"s" == selected_class_id %}selected{% endif %}>
-                            {{ cls.name }}
-                        </option>
+                    <option value="{{ cls.id }}" {% if cls.id|stringformat:"s" == selected_class_id %}selected{% endif %}>{{ cls.name }}</option>
                     {% endfor %}
                 </select>
             </form>
 
             <!-- Create Question -->
             <h3>➕ Create Question</h3>
-            <form method="post" class="mb-4">
+            <form class="mb-4" method="post">
                 {% csrf_token %}
                 {{ question_form.as_p }}
                 <input name="action" type="hidden" value="create_question">
@@ -57,94 +56,166 @@
             <h3>📌 Questions</h3>
             <ul class="list-group mb-4">
                 {% for q in questions %}
-                    <li class="list-group-item">
-                        <div id="question-display-{{ q.id }}">
-                            {{ q.text }} - {{ q.get_question_type_display }} ({{ q.assigned_class.name }})
-                            <button class="btn btn-sm btn-outline-primary ms-2" onclick="toggleEditForm('{{ q.id }}', 'question')">Edit</button>
-                            <form method="post" style="display:inline;">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="delete_question">
-                                <input type="hidden" name="question_id" value="{{ q.id }}">
-                                <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-                            </form>
-                        </div>
-                        <div id="question-edit-form-{{ q.id }}" style="display:none;">
-                            <form method="post" class="mt-2">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="edit_question">
-                                <input type="hidden" name="question_id" value="{{ q.id }}">
-                                <input class="form-control mb-2" type="text" name="text" value="{{ q.text }}">
-                                <select class="form-select mb-2" name="question_type">
-                                    <option value="MCQ" {% if q.question_type == 'MCQ' %}selected{% endif %}>MCQ</option>
-                                    <option value="Short" {% if q.question_type == 'Short' %}selected{% endif %}>Short</option>
-                                </select>
-                                <select class="form-select mb-2" name="assigned_class">
-                                    {% for cls in classes %}
-                                        <option value="{{ cls.id }}" {% if cls == q.assigned_class %}selected{% endif %}>{{ cls.name }}</option>
-                                    {% endfor %}
-                                </select>
-                                <button class="btn btn-sm btn-primary" type="submit">Save</button>
-                            </form>
-                        </div>
-                    </li>
+                <li class="list-group-item">
+                    <div id="question-display-{{ q.id }}">
+                        {{ q.text }} - {{ q.get_question_type_display }} ({{ q.assigned_class.name }})
+                        <button class="btn btn-sm btn-outline-primary ms-2"
+                                onclick="toggleEditForm('{{ q.id }}', 'question')">Edit
+                        </button>
+                        <form method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <input name="action" type="hidden" value="delete_question">
+                            <input name="question_id" type="hidden" value="{{ q.id }}">
+                            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                        </form>
+                    </div>
+                    <div id="question-edit-form-{{ q.id }}" style="display:none;">
+                        <form class="mt-2" method="post">
+                            {% csrf_token %}
+                            <input name="action" type="hidden" value="edit_question">
+                            <input name="question_id" type="hidden" value="{{ q.id }}">
+                            {% with form=question_forms|get_item:q.id %}
+                            {{ form.as_p }}
+                            {% endwith %}
+                            <button class="btn btn-sm btn-primary" type="submit">Save</button>
+                        </form>
+                    </div>
+                </li>
                 {% empty %}
-                    <li class="list-group-item text-muted">No questions available.</li>
+                <li class="list-group-item text-muted">No questions available.</li>
                 {% endfor %}
             </ul>
 
             <!-- Create Assignment -->
             <h3>➕ Create Assignment</h3>
-            <form method="post" class="mb-4">
-                {% csrf_token %}
-                {{ assignment_form.as_p }}
-                <input name="action" type="hidden" value="create_assignment">
-                <button class="btn btn-success" type="submit">Add Assignment</button>
-            </form>
+<!--            <form class="mb-4" method="post">-->
+<!--                {% csrf_token %}-->
+<!--                {{ assignment_form.as_p }}-->
+<!--                <input name="action" type="hidden" value="create_assignment">-->
+<!--                <button class="btn btn-success" type="submit">Add Assignment</button>-->
+<!--            </form>-->
 
             <!-- Assignments List -->
             <h3>📝 Assignments</h3>
             <ul class="list-group">
                 {% for a in assignments %}
-                    <li class="list-group-item">
-                        <div id="assignment-display-{{ a.id }}">
-                            {{ a.title }} - {{ a.assigned_class.name }}
-                            <button class="btn btn-sm btn-outline-primary ms-2" onclick="toggleEditForm('{{ a.id }}', 'assignment')">Edit</button>
-                            <form method="post" style="display:inline;">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="delete_assignment">
-                                <input type="hidden" name="assignment_id" value="{{ a.id }}">
-                                <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-                            </form>
-                        </div>
-                        <div id="assignment-edit-form-{{ a.id }}" style="display:none;">
-                            <form method="post" class="mt-2">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="edit_assignment">
-                                <input type="hidden" name="assignment_id" value="{{ a.id }}">
-                                <input class="form-control mb-2" type="text" name="title" value="{{ a.title }}">
-                                <textarea class="form-control mb-2" name="description">{{ a.description }}</textarea>
-                                <input class="form-control mb-2" type="date" name="due_date" value="{{ a.due_date|date:"Y-m-d" }}">
-                                <select class="form-select mb-2" name="assigned_class">
-                                    {% for cls in classes %}
-                                        <option value="{{ cls.id }}" {% if cls == a.assigned_class %}selected{% endif %}>{{ cls.name }}</option>
-                                    {% endfor %}
-                                </select>
-                                <button class="btn btn-sm btn-primary" type="submit">Save</button>
-                            </form>
-                        </div>
-                    </li>
+                <li class="list-group-item">
+                    <div id="assignment-display-{{ a.id }}">
+                        {{ a.title }} - {{ a.assigned_class.name }}
+                        <button class="btn btn-sm btn-outline-primary ms-2"
+                                onclick="toggleEditForm('{{ a.id }}', 'assignment')">Edit
+                        </button>
+                        <form method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <input name="action" type="hidden" value="delete_assignment">
+                            <input name="assignment_id" type="hidden" value="{{ a.id }}">
+                            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                        </form>
+                    </div>
+                    <div id="assignment-edit-form-{{ a.id }}" style="display:none;">
+                        <form class="mt-2" method="post">
+                            {% csrf_token %}
+                            <input name="action" type="hidden" value="edit_assignment">
+                            <input name="assignment_id" type="hidden" value="{{ a.id }}">
+                            <input class="form-control mb-2" name="title" type="text" value="{{ a.title }}">
+                            <textarea class="form-control mb-2" name="description">{{ a.description }}</textarea>
+                            <input Y-m-d class="form-control mb-2" name="due_date" type="date"
+                                   value="{{ a.due_date|date:'' }}">
+                            <select class="form-select mb-2" name="assigned_class">
+                                {% for cls in classes %}
+                                <option value="{{ cls.id }}" {% if a.assigned_class.id == cls.id %}selected{% endif %}>{{ cls.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <button class="btn btn-sm btn-primary" type="submit">Save</button>
+                        </form>
+                    </div>
+                </li>
                 {% empty %}
-                    <li class="list-group-item text-muted">No assignments available.</li>
+                <li class="list-group-item text-muted">No assignments available.</li>
                 {% endfor %}
             </ul>
         </div>
     </div>
 </div>
-
+<div>
+    <a href="{% url 'assignment_create_view' %}">
+        <button type="button" >Create a New Assignment</button>
+    </a>
+</div>
 <script>
     function toggleEditForm(id, type) {
         document.getElementById(`${type}-display-${id}`).style.display = 'none';
         document.getElementById(`${type}-edit-form-${id}`).style.display = 'block';
     }
 </script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+<style>
+    body {
+        font-family: 'Outfit', sans-serif;
+        background: linear-gradient(120deg, #f6f9fc, #e9eff5);
+        color: #333;
+    }
+
+    .card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(12px);
+        border-radius: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-header h2 {
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .table {
+        border-radius: 1rem;
+        overflow: hidden;
+    }
+
+    .btn {
+        border-radius: 50px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-success:hover, .btn-primary:hover, .btn-outline-primary:hover, .btn-outline-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-select, .form-control {
+        border-radius: 12px;
+    }
+
+    h3 {
+        margin-top: 2rem;
+        font-weight: 600;
+        color: #182848;
+    }
+
+    .list-group-item {
+        background-color: #fff;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+        margin-bottom: 10px;
+        padding: 15px 20px;
+    }
+
+    select:focus, input:focus, textarea:focus {
+        outline: none !important;
+        box-shadow: 0 0 0 0.25rem rgba(75, 108, 183, 0.25);
+        border-color: #4b6cb7;
+    }
+
+    .table th, .table td {
+        vertical-align: middle;
+    }
+
+    .text-muted {
+        font-style: italic;
+    }
+</style>
+
 {% endblock %}

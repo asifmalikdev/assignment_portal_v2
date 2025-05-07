@@ -103,18 +103,23 @@ class TeacherDashboardView(View):
         classes = request.user.teaching_classes.all()
 
         if class_filter:
-            question = AssignmentQuestion.objects.filter(teacher = request.user, assigned_class__id = class_filter)
-            assignments = Assignment.objects.filter(teacher = request.user, assigne_class__id = class_filter)
+            questions = AssignmentQuestion.objects.filter(teacher = request.user, assigned_class__id = class_filter)
+            assignments = Assignment.objects.filter(teacher = request.user, assigned_class__id = class_filter)
         else:
             questions = AssignmentQuestion.objects.filter(teacher = request.user)
             assignments = Assignment.objects.filter(teacher=request.user)
 
+        question_forms = {
+            q.id: AssignmentQuestionInLineForm(instance=q, user=request.user)
+            for q in questions
+        }
 
         context = {
             'classes': classes,
             'selected_class_id':class_filter,
             "assignment_form": AssignmentForm(request = request),
-            'question_form' : AssignmentQuestionInLineForm(),
+            "question_form":AssignmentQuestionInLineForm(user=request.user),
+            'question_forms' : question_forms,
             'assignments' : assignments,
             'questions': questions,
             "name_is": name_is,
@@ -127,7 +132,7 @@ class TeacherDashboardView(View):
         action = request.POST.get('action')
 
         if action == 'create_question':
-            form = AssignmentQuestionInLineForm(request.POST)
+            form = AssignmentQuestionInLineForm(request.POST, user=request.user)
             if form.is_valid():
                 question = form.save(commit=False)
                 question.teacher = request.user
@@ -137,14 +142,17 @@ class TeacherDashboardView(View):
                 messages.error(request, "Error creating question.")
 
 
+
         elif action == 'edit_question':
             question_id = request.POST.get('question_id')
             question = get_object_or_404(AssignmentQuestion, id=question_id, teacher=request.user)
-            form = AssignmentQuestionInLineForm(request.POST, instance=question)
+            form = AssignmentQuestionInLineForm(request.POST, instance=question, user=request.user)
             if form.is_valid():
                 form.save()
                 messages.success(request, "Question updated.")
+
             else:
+
                 messages.error(request, "Error updating question.")
 
 
