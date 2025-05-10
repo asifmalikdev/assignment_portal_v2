@@ -1,8 +1,9 @@
+from .views import TeacherDashboardView, CustomTokenObtainPairView
 from django.urls import path
 from . import views
-from .views import TeacherDashboardView
 
 urlpatterns = [
+    path('api/token/', CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('signup/admin', views.signup_admin, name = 'signup_admin'),

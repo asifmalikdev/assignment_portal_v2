@@ -11,6 +11,20 @@ from users.forms import UserLoginForm, TeacherSignupForm, StudentSignupForm, Adm
 from django.contrib.auth import authenticate
 from assignments.models import Assignment, AssignmentQuestion, AssignmentQuestionThrough
 from assignments.forms import AssignmentForm, AssignmentQuestionThroughForm, AssignmentQuestionInLineForm
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import CustomTokenObtainPairSerializer, UserSerializer
+from rest_framework.renderers import JSONRenderer
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import status
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+    renderer_classes = [JSONRenderer]  # Only allow JSON, no HTML
+
+    def get(self, request, *args, **kwargs):
+        return Response({"detail": "Use POST method with email and password to obtain token."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 
 def validate_user(email, password):
