@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<h2>Create Assignment</h2>
+
+<form method="post" id="assignment-form">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <h3>Select Questions:</h3>
+    <div id="question-list">
+        {% for question in question_book %}
+            <div class="question-item" data-class-id="{{ question.assigned_class.id }}">
+                <input type="checkbox" name="questions" value="{{ question.id }}" id="q{{ question.id }}">
+                <label for="q{{ question.id }}">
+                    {{ question.text|truncatewords:15 }} ({{ question.get_question_type_display }}) - {{ question.assigned_class.name }}
+                </label>
+            </div>
+        {% endfor %}
+    </div>
+
+    <button type="submit">Create Assignment</button>
+</form>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const classSelect = document.getElementById("id_assigned_class");
+    const questionItems = document.querySelectorAll(".question-item");
+
+    function filterQuestions() {
+        const selectedClassId = classSelect.value;
+        questionItems.forEach(item => {
+            if (item.dataset.classId === selectedClassId) {
+                item.style.display = "block";
+            } else {
+                item.style.display = "none";
+                item.querySelector("input").checked = false;
+            }
+        });
+    }
+
+    classSelect.addEventListener("change", filterQuestions);
+    filterQuestions();  // Run initially in case form is pre-filled
+});
+</script>
+{% endblock %}

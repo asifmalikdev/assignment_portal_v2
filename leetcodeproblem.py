@@ -1,19 +1,16 @@
 class Solution(object):
-    def isMatch(self, s, p):
-        if "." and "*" in p:
-            for i in s:
-                if i in p:
-                    return True
+    def strStr(self, haystack, needle):
+        if needle=="":
+            return 0
+        for i in range((len(haystack)-len(needle))+1):
+            if haystack[i:(i+len(needle))]==needle:
+                return i
+        return -1
 
-        if '*' in p:
-            pass
 
 
-        else:
-            if s == p:
-                return True
-            else:
-                return False
-            False
+
 obj = Solution()
-print(obj.isMatch('asd', '*fsdf'))
+print(obj.strStr("asdfasdf", 'df'))
+print(obj.strStr("asdfasdf", 'asdfg'))
+print(obj.strStr("assdfasdf", 'asdf'))
