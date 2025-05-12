@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+    <h2>{{ assignment.title }}</h2>
+    <p>{{ assignment.description }}</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-success">Submit Assignment</button>
+    </form>
+</div>
+{% endblock %}

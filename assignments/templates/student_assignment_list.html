@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Your Assignments</h2>
+    {% if assignments %}
+        <div class="list-group shadow-sm">
+            {% for assignment in assignments %}
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-1">{{ assignment.title }}</h5>
+                        <small>Due: {{ assignment.due_date|date:"M d, Y H:i" }}</small><br>
+                        <small>Class: {{ assignment.assigned_class.name }}</small>
+                    </div>
+                    <a href="{% url 'submit_assignment' assignment.id %}" class="btn btn-primary">
+                        Submit
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-muted">No assignments found.</p>
+    {% endif %}
+</div>
+{% endblock %}

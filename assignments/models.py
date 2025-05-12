@@ -123,7 +123,7 @@ class AssignmentSubmission(models.Model):
         return f"{self.student.full_name} - {self.assignment.title}"
 
 
-class StudentAnser(models.Model):
+class StudentAnswer(models.Model):
     submission = models.ForeignKey(
         AssignmentSubmission,
         on_delete=CASCADE,

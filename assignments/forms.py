@@ -78,3 +78,31 @@ AssignmentQuestionThroughInlineFormset = inlineformset_factory(
     extra=1,
     can_delete=True
 )
+from .models import AssignmentSubmission, StudentAnswer, AssignmentQuestion
+
+class AssignmentSubmissionForm(forms.Form):
+    def __int__(self, *args, **kwargs):
+        self.assignment = kwargs.pop('assignment')
+        super().__init__(*args, **kwargs)
+        for question in self.assignment.questions.all():
+            field_name = f"question_{question.id}"
+            if question.question_type == 'MCQ':
+                choices = [
+                    ('a', question.option_a),
+                    ('b', question.option_b),
+                    ('c', question.option_c),
+                    ('d', question.option_d),
+                ]
+                self.fields[field_name]= forms.ChoiceField(
+                    label=question.text,
+                    chocies = choices,
+                    widget = forms.RadioSelect,
+                    required = True
+                )
+            else:
+                self.fields[field_name]=forms.CharField(
+                    label = question.text,
+                    widget = forms.Textarea,
+                    required=True
+                )
+
