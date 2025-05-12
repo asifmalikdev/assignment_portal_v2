@@ -8,6 +8,7 @@ from .forms import AssignmentForm
 
 
 class AssignmentCreateView(LoginRequiredMixin, FormView):
+    login_url = "/"
     template_name = "assignment_create_template.html"
     form_class = AssignmentForm
     success_url = reverse_lazy("teacher_dashboard")
@@ -33,9 +34,13 @@ class AssignmentCreateView(LoginRequiredMixin, FormView):
             )
         return super().form_valid(form)
 
+from django.views import View
 
+class StudentAssignment(View):
+    template_name="student_assignment.html"
+    def get(self, request):
 
-
+        return render(request, self.template_name)
 
 def submit_assignment(request):
     return HttpResponse("Submit Assignment View (placeholder)")

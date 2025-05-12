@@ -2,6 +2,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.db.models import CASCADE
+from orca.messages import BLANK
+
 from school.models import ClassRoom
 from django.utils import timezone
 
@@ -99,3 +101,58 @@ class AssignmentQuestionThrough(models.Model):
 
     class Meta:
         unique_together = ('assignment', 'question')
+
+class AssignmentSubmission(models.Model):
+    student = models.ForeignKey(
+        User,
+        on_delete=CASCADE,
+        limit_choices_to={'role':'student'},
+        related_name='submissions'
+    )
+    assignment = models.ForeignKey(
+        Assignment,
+        on_delete=CASCADE,
+        related_name="submission"
+    )
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    is_grade = models.BooleanField(default=False)
+    total_score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True),
+    class Meta:
+        unique_together = ('student', "assignment")
+    def __str__(self):
+        return f"{self.student.full_name} - {self.assignment.title}"
+
+
+class StudentAnser(models.Model):
+    submission = models.ForeignKey(
+        AssignmentSubmission,
+        on_delete=CASCADE,
+        related_name="answers"
+    )
+    question = models.ForeignKey(
+        AssignmentQuestion,
+        on_delete=CASCADE
+    )
+    answer_text = models.TextField(blank=True, null=True)
+    select_option = models.CharField(
+        max_length=1,
+        choices=[('a','A'),('b','B'),('c','C'),('d','D')],
+        blank=True,
+        null=True
+    )
+    def __str__(self):
+        return f"{self.submission.student.full_name} - Q: {self.question.text}"
+
+
+
+
+
+
+
+
+
+
+
+
+
+

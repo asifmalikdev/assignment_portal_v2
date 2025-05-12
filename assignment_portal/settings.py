@@ -52,6 +52,8 @@ REST_FRAMEWORK = {
     ),
 }
 
+LOGIN_URL = "/"
+
 
 AUTH_USER_MODEL = 'users.User'
 CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'

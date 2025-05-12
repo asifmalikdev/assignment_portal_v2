@@ -20,7 +20,7 @@ from rest_framework import status
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
-    renderer_classes = [JSONRenderer]  # Only allow JSON, no HTML
+    renderer_classes = [JSONRenderer]
 
     def get(self, request, *args, **kwargs):
         return Response({"detail": "Use POST method with email and password to obtain token."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -64,9 +64,9 @@ def signup_admin(request):
         if form.is_valid():
             form.save()
             return redirect('login')
-        else:
-            form = AdminSignupForm
-        return render(request, 'signup.html', {'form': form, 'role':'Admin'})
+    else:
+        form = AdminSignupForm
+    return render(request, 'signup.html', {'form': form, 'role':'Admin'})
 
 
 def signup_teacher(request):
@@ -127,7 +127,6 @@ class TeacherDashboardView(View):
             q.id: AssignmentQuestionInLineForm(instance=q, user=request.user)
             for q in questions
         }
-
         context = {
             'classes': classes,
             'selected_class_id':class_filter,
@@ -215,11 +214,41 @@ def delete_question(request, pk):
     return redirect('teacher_dashboard')
 
 
+def student_basis_info(request):
+    name_is = request.user.full_name
+    email_is = request.user.email
+    classes = ClassRoom.objects.filter(students__email__iexact=email_is)
+
+    class_teacher_map = {}
+    for class_ in classes:
+        if class_.assigned_teacher:
+            print(f"DEBUG: Class {class_.name}, Teacher Full Name: {class_.assigned_teacher.full_name}")
+        else:
+            print(f"DEBUG: Class {class_.name}, Teacher: None")
+
+        teacher_name = class_.assigned_teacher.full_name if class_.assigned_teacher else "No teacher assigned"
+        class_teacher_map[class_.name] = teacher_name
+
+    return name_is, email_is, classes, class_teacher_map
 
 
-@student_required
-def student_dashboard(request):
-    return render(request, 'student_dashboard.html')
+@method_decorator(student_required, name='dispatch')
+class  Student_Dashboard_View(View):
+    template_name = "student_dashboard.html"
+
+    def get(self, request):
+        if request.user.role != "student":
+            return HttpResponse("this module is just for students")
+
+        name, email, classes, class_teacher_map = student_basis_info(request)
+
+        context = {
+            "name": name,
+            "email": email,
+            "classes": classes,
+            "class_teacher_map": class_teacher_map
+        }
+        return render(request, self.template_name, context)
 @admin_required
 def admin_dashboard(request):
     districts = District.objects.all()
