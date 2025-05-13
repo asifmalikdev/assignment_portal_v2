@@ -43,3 +43,24 @@ class AssignmentQuestionAdmin(admin.ModelAdmin):
             obj.teacher = request.user
         obj.full_clean()
         super().save_model(request, obj, form, change)
+from django.contrib import admin
+from .models import AssignmentSubmission, StudentAnswer, Assignment, AssignmentQuestion
+
+class StudentAnswerInline(admin.TabularInline):
+    model = StudentAnswer
+    extra = 0
+    readonly_fields = ('question', 'answer_text', 'select_option')
+    can_delete = False
+
+@admin.register(AssignmentSubmission)
+class AssignmentSubmissionAdmin(admin.ModelAdmin):
+    list_display = ('student', 'assignment', 'submitted_at', 'is_grade', 'total_score')
+    list_filter = ('assignment', 'is_grade')
+    search_fields = ('student__full_name', 'assignment__title')
+    inlines = [StudentAnswerInline]
+
+@admin.register(StudentAnswer)
+class StudentAnswerAdmin(admin.ModelAdmin):
+    list_display = ('submission', 'question', 'answer_text', 'select_option')
+    list_filter = ('question__question_type',)
+    search_fields = ('submission__student__full_name', 'question__text')

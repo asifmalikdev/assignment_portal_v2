@@ -44,10 +44,11 @@ def login_view(request):
             login(request, user)
             if user.is_superuser or user.role == 'admin':
                 return redirect('admin_dashboard')
-            elif user.role == 'teacher' or user.is_superuser:
+            elif user.role == 'teacher':
                 return redirect('teacher_dashboard')
-            elif user.role == 'student' or user.is_superuser:
+            elif user.role == 'student':
                 return redirect('student_dashboard')
+
         form = UserLoginForm()
         return render(request, 'login.html', {'form': form, 'error': 'Invalid email or password'})
     else:
@@ -65,7 +66,7 @@ def signup_admin(request):
             form.save()
             return redirect('login')
     else:
-        form = AdminSignupForm
+        form = AdminSignupForm()
     return render(request, 'signup.html', {'form': form, 'role':'Admin'})
 
 

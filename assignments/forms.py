@@ -81,7 +81,7 @@ AssignmentQuestionThroughInlineFormset = inlineformset_factory(
 from .models import AssignmentSubmission, StudentAnswer, AssignmentQuestion
 
 class AssignmentSubmissionForm(forms.Form):
-    def __int__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.assignment = kwargs.pop('assignment')
         super().__init__(*args, **kwargs)
         for question in self.assignment.questions.all():
@@ -93,16 +93,16 @@ class AssignmentSubmissionForm(forms.Form):
                     ('c', question.option_c),
                     ('d', question.option_d),
                 ]
-                self.fields[field_name]= forms.ChoiceField(
+                self.fields[field_name] = forms.ChoiceField(
                     label=question.text,
-                    chocies = choices,
-                    widget = forms.RadioSelect,
-                    required = True
+                    choices=choices,
+                    widget=forms.RadioSelect,
+                    required=True
                 )
             else:
-                self.fields[field_name]=forms.CharField(
-                    label = question.text,
-                    widget = forms.Textarea,
+                self.fields[field_name] = forms.CharField(
+                    label=question.text,
+                    widget=forms.Textarea,
                     required=True
                 )
 
