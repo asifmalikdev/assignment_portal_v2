@@ -78,5 +78,6 @@ class ClassRoom(models.Model):
         if len(self.name) < 2:
             raise ValidationError("Class name must be at least 2 characters long.")
 
+
     def __str__(self):
         return f"{self.name} - Grade {self.grade_level} ({self.school.name})"

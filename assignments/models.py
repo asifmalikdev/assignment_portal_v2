@@ -2,8 +2,6 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.db.models import CASCADE
-from orca.messages import BLANK
-
 from school.models import ClassRoom
 from django.utils import timezone
 
@@ -50,9 +48,9 @@ class AssignmentQuestion(models.Model):
         if self.question_type in ['LONG', 'SHORT']:
             if any([self.option_a, self.option_b, self.option_c, self.option_d, self.correct_option]):
                 raise ValidationError("Options are only allowed for MCQ")
-
-        # if not self.teacher.teaching_classes.filter(pk=self.assigned_class.pk).exists():
-        #     raise ValidationError("This teacher is not assigned to the selected class.")
+        if self.teacher and self.assigned_class_id:
+            if self.assigned_class.assigned_teacher_id != self.teacher_id:
+                raise ValidationError("You are not assigned to this class")
 
     def __str__(self):
         return f"{self.text[:30]} - {self.get_question_type_display()} ({self.assigned_class.name})"

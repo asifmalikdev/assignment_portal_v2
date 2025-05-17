@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'assignments',
     'core',
     'crispy_forms',
-    'school'
+    'school',
+    'rest_framework',
 ]
 
 REST_FRAMEWORK = {

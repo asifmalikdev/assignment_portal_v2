@@ -117,7 +117,7 @@
                             </a>
                         </td>
                         <td>{{ class_.grade_level }}</td>
-                        <td>{{ class_.assigned_teacher.get_full_name }}</td>
+                        <td>{{ class_.assigned_teacher.full_name }}</td>
                         <td>{{ class_.is_active }}</td>
                         <td><a href="{% url 'delete_class' class_.id %}" class="btn btn-sm btn-danger">Delete</a></td>
                     </tr>
@@ -132,7 +132,7 @@
                           </div>
                           <div class="modal-body">
                               <p><strong>Grade Level:</strong> {{ class_.grade_level }}</p>
-                              <p><strong>Assigned Teacher:</strong> {{ class_.assigned_teacher.get_full_name }} ({{ class_.assigned_teacher.username }})</p>
+                              <p><strong>Assigned Teacher:</strong> {{ class_.assigned_teacher.full_name }}</p>
                               <hr>
                               <p><strong>Students:</strong></p>
                               {% if class_.students.all %}

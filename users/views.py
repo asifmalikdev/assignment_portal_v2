@@ -293,8 +293,6 @@ def admin_dashboard(request):
             return redirect('admin_dashboard')
 
 
-
-
     context = {
         'districts': districts,
         'schools': schools,

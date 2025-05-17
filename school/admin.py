@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import District, School, ClassRoom
+from .forms import ClassForm
 
 @admin.register(District)
 class DistrictAdmin(admin.ModelAdmin):
@@ -19,6 +20,7 @@ class SchoolAdmin(admin.ModelAdmin):
 
 @admin.register(ClassRoom)
 class ClassAdmin(admin.ModelAdmin):
+    form = ClassForm
     list_display = ('id', 'name', 'grade_level', 'school', 'is_active', 'assigned_teacher', 'students_list', )
     list_filter = ('grade_level', 'school', 'is_active')
     ordering = ('created_at',)

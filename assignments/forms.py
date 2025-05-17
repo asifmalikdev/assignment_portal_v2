@@ -13,15 +13,24 @@ class AssignmentQuestionInLineForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        if cleaned_data.get('question_type') == 'MCQ':
+        if not self.instance.teacher and self.user:
+            self.instance.teacher = self.user
+        question_type = cleaned_data.get('question_type')
+        if question_type == 'MCQ':
             required = ['option_a', 'option_b', 'option_c', 'option_d', 'correct_option']
             for field in required:
                 if not cleaned_data.get(field):
                     raise ValidationError('All options and the correct answer are required for MCQs.')
-        elif cleaned_data.get('question_type') in ['SHORT', 'LONG']:
+        elif question_type in ['SHORT', 'LONG']:
             for option_field in ['option_a', 'option_b', 'option_c', 'option_d', 'correct_option']:
                 if cleaned_data.get(option_field):
                     self.add_error(option_field, 'Options are only allowed for MCQ type questions.')
+
+        return cleaned_data
+
+
+
+
         return cleaned_data
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
