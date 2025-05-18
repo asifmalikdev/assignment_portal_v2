@@ -51,9 +51,13 @@ class AssignmentQuestion(models.Model):
         if self.teacher and self.assigned_class_id:
             if self.assigned_class.assigned_teacher_id != self.teacher_id:
                 raise ValidationError("You are not assigned to this class")
+        if not self.teacher:
+            self.teacher = self.assigned_class.assinged_teacher
 
     def __str__(self):
-        return f"{self.text[:30]} - {self.get_question_type_display()} ({self.assigned_class.name})"
+        class_name = self.assigned_class.name if hasattr(self, "assigned_class") and self.assigned_class else "No Class"
+        return f"{self.text[:30]} - {self.get_question_type_display()} ({class_name})"
+
 
 def validate_due_date(value):
     if value < timezone.now():
@@ -84,7 +88,9 @@ class Assignment(models.Model):
         through = 'AssignmentQuestionThrough',
         related_name = 'assignments'
     )
-    # def clean(self):
+    def clean(self):
+        if not self.teacher:
+            self.teacher = self.assigned_class.assigned_teacher
     #     if not self.teacher.teaching_classes.filter(pk = self.assigned_class.pk).exists():
     #         raise ValidationError("this teacher is not assigned to the selected class")
 

@@ -13,7 +13,8 @@ class AssignmentQuestionInLineForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        if not self.instance.teacher and self.user:
+        print(self.instance)
+        if self.user:
             self.instance.teacher = self.user
         question_type = cleaned_data.get('question_type')
         if question_type == 'MCQ':
@@ -45,6 +46,7 @@ class AssignmentQuestionInLineForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
 
 class AssignmentForm(forms.ModelForm):
     class Meta:
