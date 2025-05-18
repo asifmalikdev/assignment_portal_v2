@@ -233,6 +233,7 @@ def student_basis_info(request):
     return name_is, email_is, classes, class_teacher_map
 
 
+
 @method_decorator(student_required, name='dispatch')
 class  Student_Dashboard_View(View):
     template_name = "student_dashboard.html"
