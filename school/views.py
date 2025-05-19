@@ -1,9 +1,10 @@
+from django.contrib.admin.templatetags.admin_list import pagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import DistrictSerializer, SchoolSerializer
+from .serializers import DistrictSerializer, SchoolSerializer, ClassRoomSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
-from .models import District, School
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
+from .models import District, School, ClassRoom
 from rest_framework.pagination import PageNumberPagination
 from users.permissions import IsAdminUser,IsStudentUser,IsTeacherUser
 
@@ -97,23 +98,23 @@ class SchoolDetailView(APIView):
             return School.objects.get(name__iexact=name)
         except School.DoesNotExist:
             return None
-    def get(self, name):
+    def get(self, request, name):
 
         schol=self.get_object(name)
         if not schol:
             return Response({"msg":"school not exist"}, status=404)
         serializer = SchoolSerializer(schol)
         return Response(serializer.data)
-    def put(self, name):
+    def put(self,request, name):
         schol=self.get_object(name)
         if not schol:
             return Response({"msg":"school not found"})
-        serializer = SchoolSerializer(schol)
+        serializer = SchoolSerializer(schol, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({"msg":f"{schol.name} is updated to "}, status=201)
         return Response(serializer.error)
-    def delete(self, name):
+    def delete(self,request, name):
         schol=self.get_object(name)
         if schol:
             name_val=schol.name
@@ -121,6 +122,27 @@ class SchoolDetailView(APIView):
             return Response({"msg":f"{name_val} is deleted"})
         return Response({"msg":"School did not found"}, status=404)
 
+from .permissions import AllowPostForAnon
+class ClassRoomListCreateView(APIView):
+    # authentication_classes = [JWTAuthentication]
+    permission_classes = [ AllowAny]
 
-# class ClassRoomListCreateView()
+    def get(self, request):
+        classes = ClassRoom.objects.all()
 
+        paginator = PageNumberPagination()
+        paginator.page_size = 3
+        result_page = paginator.paginate_queryset(classes, request)
+
+        serializer = ClassRoomSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+    def post(self, request):
+        print("request data : ",request.data)
+        serializer = ClassRoomSerializer(data = request.data)
+        if serializer.is_valid():
+            serializer.save()
+            print("serilizer data ;", serializer.data)
+            return Response({"msg":"Data save"}, status=201)
+        return Response(serializer.errors)

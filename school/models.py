@@ -40,6 +40,7 @@ class School(models.Model):
         if len(self.address.strip())<10:
             raise ValidationError("Address Must Contain Atleast 10 Character")
 
+
 def validate_grade_level(value):
     if value < 1 or value > 12:
         raise ValidationError("Grade level must be between 1 and 12.")

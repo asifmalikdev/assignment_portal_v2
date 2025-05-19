@@ -3,7 +3,7 @@ from .models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 class UserAdmin(BaseUserAdmin):
-    list_display = ('email', 'full_name', 'role','school', 'is_active', 'is_staff')
+    list_display = ('id','email', 'full_name', 'role','school', 'is_active', 'is_staff')
     list_filter = ('role', 'is_active', 'is_staff', 'school')
     ordering = ('email','school')
     search_fields = ('email', 'full_name',)
