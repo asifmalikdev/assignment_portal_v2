@@ -4,3 +4,8 @@ class DistrictSerializer(serializers.ModelSerializer):
     class Meta:
         model = District
         fields = ['id', 'name', 'is_active']
+
+class SchoolSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = School
+        fields= '__all__'

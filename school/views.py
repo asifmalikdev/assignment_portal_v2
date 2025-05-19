@@ -1,17 +1,17 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import DistrictSerializer
+from .serializers import DistrictSerializer, SchoolSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
-from .models import District
+from .models import District, School
 from rest_framework.pagination import PageNumberPagination
-
+from users.permissions import IsAdminUser,IsStudentUser,IsTeacherUser
 
 class DistrictListCreateView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def get(self, request, format=None):
+    def get(self, request):
         districts = District.objects.all()
 
         paginator = PageNumberPagination()
@@ -31,7 +31,7 @@ class DistrictListCreateView(APIView):
 
 class DistrictDetailView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,IsAdminUser]
 
     def get_object(self, name):
         try:
@@ -63,3 +63,64 @@ class DistrictDetailView(APIView):
         name_val = district.name
         district.delete()
         return Response({"msg": f"{name_val} is deleted"})
+
+class SchoolListCreateViwe(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        schools= School.objects.all()
+
+        paginator = PageNumberPagination()
+        paginator.page_size=3
+        result_page=paginator.paginate_queryset(schools, request)
+
+        serializer = SchoolSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+    def post(self, request):
+        schol = request.data
+        print(schol)
+        serializer = SchoolSerializer(data = schol)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"msg":"School Saved"})
+        return Response(serializer.errors)
+
+class SchoolDetailView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    def get_object(self, name):
+        try:
+            return School.objects.get(name__iexact=name)
+        except School.DoesNotExist:
+            return None
+    def get(self, name):
+
+        schol=self.get_object(name)
+        if not schol:
+            return Response({"msg":"school not exist"}, status=404)
+        serializer = SchoolSerializer(schol)
+        return Response(serializer.data)
+    def put(self, name):
+        schol=self.get_object(name)
+        if not schol:
+            return Response({"msg":"school not found"})
+        serializer = SchoolSerializer(schol)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"msg":f"{schol.name} is updated to "}, status=201)
+        return Response(serializer.error)
+    def delete(self, name):
+        schol=self.get_object(name)
+        if schol:
+            name_val=schol.name
+            schol.delete()
+            return Response({"msg":f"{name_val} is deleted"})
+        return Response({"msg":"School did not found"}, status=404)
+
+
+# class ClassRoomListCreateView()
+
