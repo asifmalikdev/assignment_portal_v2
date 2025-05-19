@@ -6,6 +6,7 @@ urlpatterns = [
     path("districts/<str:name>/", views.DistrictDetailView.as_view(), name="district-detail"),
     path("school/", views.SchoolListCreateViwe.as_view(), name="school-list-create"),
     path("school/<str:name>/", views.SchoolDetailView.as_view(), name="school-detail"),
-    path("class/", views.ClassRoomListCreateView.as_view(), name="classes")
+    path("class/", views.ClassRoomListCreateView.as_view(), name="classes"),
+    path("class/<str:name>/", views.ClassRoomDetailView.as_view(), name="classes-detail")
 
 ]

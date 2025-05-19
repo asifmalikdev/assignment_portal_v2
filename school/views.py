@@ -1,3 +1,6 @@
+from pyexpat import expat_CAPI
+from symtable import Class
+
 from django.contrib.admin.templatetags.admin_list import pagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -124,8 +127,8 @@ class SchoolDetailView(APIView):
 
 from .permissions import AllowPostForAnon
 class ClassRoomListCreateView(APIView):
-    # authentication_classes = [JWTAuthentication]
-    permission_classes = [ AllowAny]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [ IsAuthenticated]
 
     def get(self, request):
         classes = ClassRoom.objects.all()
@@ -146,3 +149,36 @@ class ClassRoomListCreateView(APIView):
             print("serilizer data ;", serializer.data)
             return Response({"msg":"Data save"}, status=201)
         return Response(serializer.errors)
+
+
+
+class ClassRoomDetailView(APIView):
+    def get_object(self, name):
+        try:
+            return ClassRoom.objects.get(name__iexact=name)
+        except ClassRoom.DoesNotExist:
+            return None
+
+    def get(self, request, name):
+        class_ = self.get_object(name)
+        if not class_:
+            return Response({"msg":"Class Does Not Exist"}, status=404)
+        serializer = ClassRoomSerializer(class_)
+        return Response(serializer.data)
+
+    def put(self, request, name):
+        class_ = self.get_object(name)
+        if not class_:
+            return Response({"msg":"Class Not Found"})
+        serializer = ClassRoomSerializer(class_, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"msg":"Class Updated"},status=200)
+        return Response(serializer.errors)
+    def delete(self, request, name):
+        class_ = self.get_object(name)
+        if class_:
+            class_name= class_.name
+            class_.delete()
+            return Response({"msg":f"{class_name} is deleted"})
+        return Response({"msg":"class room does not exist"}, status=404)
