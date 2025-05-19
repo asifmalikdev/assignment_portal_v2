@@ -4,60 +4,62 @@ from .serializers import DistrictSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from .models import District
+from rest_framework.pagination import PageNumberPagination
 
 
-class District_List(APIView):
-    print("asif 1 ===================================")
+class DistrictListCreateView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    print("asif 2 ===================================")
-    def get(self, request, pk=None, format=None):
-        print("hello")
-        id = pk
-        if id:
-            try:
 
-                print("this is request.data  : ", request.data)
-                dist = District.objects.get(pk = id)
-                serilizer = DistrictSerializer(dist)
-                return Response(serilizer.data)
-            except District.DoesNotExist:
-                return Response(serilizer.errors)
-        else:
-            dist = District.objects.all()
-            serilizer = DistrictSerializer(dist, many=True)
-            return Response(serilizer.data)
-class District_Post(APIView):
+    def get(self, request, format=None):
+        districts = District.objects.all()
+
+        paginator = PageNumberPagination()
+        paginator.page_size = 2
+        result_page = paginator.paginate_queryset(districts, request)
+
+
+        serializer = DistrictSerializer(result_page, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
+        serializer = DistrictSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"msg": "District added"}, status=201)
+        return Response(serializer.errors, status=400)
+
+class DistrictDetailView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticatedOrReadOnly]
-    def post(self, request, format = None ):
-        serializer = DistrictSerializer(data = request.data)
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, name):
+        try:
+            return District.objects.get(name__iexact=name)
+        except District.DoesNotExist:
+            return None
+
+    def get(self, request, name, format=None):
+        district = self.get_object(name)
+        if not district:
+            return Response({"msg": "District not found"}, status=404)
+        serializer = DistrictSerializer(district)
+        return Response(serializer.data)
+
+    def put(self, request, name, format=None):
+        district = self.get_object(name)
+        if not district:
+            return Response({"msg": "District not found"}, status=404)
+        serializer = DistrictSerializer(district, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({"msg": "District is Added"})
-        return Response(serializer.errors)
-class DistrictPut(APIView):
-    def put(self, request, pk=None, format=None):
-        id = pk
-        dist = District.objects.get(pk = id)
-        serializer = DistrictSerializer(dist, data = request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"msg": "data updated via put"})
-        return Response({"msg": serializer.errors})
-class DistrictDelete(APIView):
-    def delete(self, request, pk=None):
-        id = pk
-        if id:
-            try:
-                dist = District.objects.get(pk=id)
-                dist.delete()
-                return Response({"msg":f"{dist.name} is deleted"})
-            except District.DoesNotExist:
-                return Response({"msg":"we don't have any district with this id"})
-        else:
-            return Response({"msg":"can't find the student"})
+            return Response({"msg": "District updated"}, status=200)
+        return Response(serializer.errors, status=400)
 
-
-
-
+    def delete(self, request, name, format=None):
+        district = self.get_object(name)
+        if not district:
+            return Response({"msg": "District not found"}, status=404)
+        name_val = district.name
+        district.delete()
+        return Response({"msg": f"{name_val} is deleted"})
