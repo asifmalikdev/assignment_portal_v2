@@ -153,18 +153,24 @@ class ClassRoomListCreateView(APIView):
 
 
 class ClassRoomDetailView(APIView):
+    print("you")
     authentication_classes = [JWTAuthentication]
     permission_classes = [ IsAuthenticated, IsAdminUser]
     def get_object(self, name):
         try:
+            print("the")
             return ClassRoom.objects.get(name__iexact=name)
         except ClassRoom.DoesNotExist:
+            print("finale")
             return None
 
     def get(self, request, name):
+        print("are")
         class_ = self.get_object(name)
         if not class_:
+            print("in")
             return Response({"msg":"Class Does Not Exist"}, status=404)
+        print("of")
         serializer = ClassRoomSerializer(class_)
         return Response(serializer.data)
 

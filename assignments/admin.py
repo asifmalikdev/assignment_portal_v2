@@ -27,7 +27,7 @@ class AssignmentAdmin(admin.ModelAdmin):
 
 @admin.register(AssignmentQuestion)
 class AssignmentQuestionAdmin(admin.ModelAdmin):
-    list_display = ('text', 'teacher', 'marks', 'question_type', 'created_at', 'assigned_class')
+    list_display = ('id','text', 'teacher', 'marks', 'question_type', 'created_at', 'assigned_class')
     ordering = ('created_at',)
     list_filter = ('teacher', 'question_type', 'assigned_class')
     search_fields = ('text',)

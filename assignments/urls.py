@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     AssignmentCreateView,
     StudentAssignmentListView,
-    AssignmentSubmitView, AssignmentQuestionListCreateAPIView
+    AssignmentSubmitView, AssignmentQuestionListCreateAPIView, AssignmentQuestionDetailAPIView
 )
 
 urlpatterns = [
@@ -10,4 +10,5 @@ urlpatterns = [
     path("student/", StudentAssignmentListView.as_view(), name="student_assignments"),
     path("submit/<int:assignment_id>/", AssignmentSubmitView.as_view(), name="submit_assignment"),
     path('assignment-questions/', AssignmentQuestionListCreateAPIView.as_view(), name='assignment-question-list-create'),
+    path('assignment-questions/<int:pk>/', AssignmentQuestionDetailAPIView.as_view(), name='assignment-question-list-create'),
 ]

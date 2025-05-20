@@ -170,4 +170,39 @@ class AssignmentQuestionListCreateAPIView(APIView):
         return Response(serializer.errors)
 
 
-# class AssignmentQuestionDetalAPIView(APIView):
+class AssignmentQuestionDetailAPIView(APIView):
+    authentication_classes= [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        return get_object_or_404(AssignmentQuestion, pk=pk)
+    def get(self,request, pk):
+        question=self.get_object(pk)
+        if not question:
+            return Response({"msg":"question not found "}, status=404)
+        serializer = AssignmentQuestionSerializer(question)
+        return Response(serializer.data)
+    def put(self, request, pk):
+        question = self.get_object(pk)
+        if not question:
+            return Response({"msg":"can't find question to update"}, status=404)
+        if question.teacher != request.user:
+            return Response({"msg":"this teacher is not allowed to update"})
+        serializer = AssignmentQuestionSerializer(question, data = request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"msg":"data is updated in db"})
+        return Response(serializer.error)
+
+    def delete(self, request, pk):
+        question = self.get_object(pk)
+        if question.teacher != request.user:
+            return Response({"msg":"this teacher cannot delete"}, status=404)
+        question.delete()
+        return Response({"msg":"question is deleted"})
+
+
+
+
+
+
