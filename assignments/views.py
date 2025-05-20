@@ -5,9 +5,16 @@ from django.contrib import messages
 from django.urls import reverse_lazy
 from django.views.generic import ListView, FormView, View
 from django.utils import timezone
+from rest_framework.decorators import authentication_classes, permission_classes
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .models import Assignment, AssignmentQuestionThrough, AssignmentSubmission, StudentAnswer, AssignmentQuestion
 from .forms import AssignmentForm, AssignmentSubmissionForm
+from .serializers import AssignmentQuestionSerializer
 
 
 class AssignmentCreateView(LoginRequiredMixin, FormView):
@@ -118,3 +125,49 @@ class AssignmentSubmitView(View):
             messages.success(request, "Your assignment was submitted successfully.")
             return redirect('student_dashboard')
         return render(request, self.template_name, {'form': form, 'assignment': assignment})
+
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated
+from users.permissions import IsTeacherOrAdmin
+
+
+class AssignmentQuestionListCreateAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated,IsTeacherOrAdmin]
+    def get(self, request):
+        print("Current User:", request.user)
+        print("Is Authenticated:", request.user.is_authenticated)
+        print("Role:", getattr(request.user, 'role', 'no role'))
+        if not request.user:
+            return Response({"msg":"we haven't got any user"})
+
+        if request.user.role =="teacher":
+            question_book = AssignmentQuestion.objects.filter(teacher = request.user)
+        elif request.user.role == "admin":
+            question_book = AssignmentQuestion.objects.all()
+        else:
+            return Response({"msg":"you are not allowed to see this"}, status=403)
+
+
+
+        paginator = PageNumberPagination()
+        paginator.page_size = 3
+        result_page = paginator.paginate_queryset(question_book, request)
+
+
+        serializer = AssignmentQuestionSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+    def post(self, request):
+        if request.user.role != "teacher":
+            return Response({"msg":"only teacher can post a question"}, status=403)
+
+        serializer = AssignmentQuestionSerializer(data = request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save(teacher = request.user)
+            return Response({"msg", "new question is added"}, status=201)
+        return Response(serializer.errors)
+
+
+# class AssignmentQuestionDetalAPIView(APIView):

@@ -128,7 +128,7 @@ class SchoolDetailView(APIView):
 from .permissions import AllowPostForAnon
 class ClassRoomListCreateView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [ IsAuthenticated]
+    permission_classes = [ IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         classes = ClassRoom.objects.all()
@@ -153,6 +153,8 @@ class ClassRoomListCreateView(APIView):
 
 
 class ClassRoomDetailView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [ IsAuthenticated, IsAdminUser]
     def get_object(self, name):
         try:
             return ClassRoom.objects.get(name__iexact=name)

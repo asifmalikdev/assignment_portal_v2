@@ -100,7 +100,6 @@ class Assignment(models.Model):
 class AssignmentQuestionThrough(models.Model):
     assignment = models.ForeignKey(Assignment, on_delete=CASCADE)
     question = models.ForeignKey(AssignmentQuestion, on_delete=CASCADE)
-    # Optional: order or custom mark settings
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
