@@ -145,3 +145,10 @@ class Mathematics():
 obj = Mathematics()
 # obj.counter(323445)
 obj.reversenumber(342350000)
+num = {
+    "title": "Final Exam",
+    "description": "Math exam assignment",
+    "due_date": "2025-06-01T12:00:00Z",
+    "assigned_class": 1,
+    "questions": [1, 2, 3]
+}

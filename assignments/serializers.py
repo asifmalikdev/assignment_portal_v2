@@ -1,6 +1,7 @@
 from rest_framework.exceptions import ValidationError
+from urllib3 import request
 
-from .models import AssignmentQuestion
+from .models import AssignmentQuestion, Assignment
 from rest_framework import serializers
 
 class AssignmentQuestionSerializer(serializers.ModelSerializer):
@@ -30,3 +31,27 @@ class AssignmentQuestionSerializer(serializers.ModelSerializer):
                 raise ValidationError("Options are not valid in Subjective type questions")
         return data
 
+class AssignmentSerializer(serializers.ModelSerializer):
+    questions = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=AssignmentQuestion.objects.all()
+    )
+    class Meta:
+        model = Assignment
+        fields = ['id', 'title', 'description', 'due_date', 'assigned_class', 'questions']
+    def validate(self,data):
+        request = self.context['request']
+        user = request.user
+        class_ = data.get("assigned_class")
+        questions = data.get("questions")
+        for question in questions:
+            print("this question is for class : ",question.assigned_class)
+        # for question in questions:
+        #     print("question : ", question.id)
+        # print("questions in serializer: ",questions)
+        # print(class_)
+        if class_.assigned_teacher != request.user:
+            raise ValidationError("This teacher is not teaching to this class")
+        print("data : ",data, "\nUser : ", user, "class assign is being assigned to : ", class_)
+
+        return data

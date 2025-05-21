@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.urls import reverse_lazy
 from django.views.generic import ListView, FormView, View
 from django.utils import timezone
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import authentication_classes, permission_classes
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -14,7 +15,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .models import Assignment, AssignmentQuestionThrough, AssignmentSubmission, StudentAnswer, AssignmentQuestion
 from .forms import AssignmentForm, AssignmentSubmissionForm
-from .serializers import AssignmentQuestionSerializer
+from .serializers import AssignmentQuestionSerializer, AssignmentSerializer
 
 
 class AssignmentCreateView(LoginRequiredMixin, FormView):
@@ -132,7 +133,7 @@ from users.permissions import IsTeacherOrAdmin
 
 
 class AssignmentQuestionListCreateAPIView(APIView):
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
     permission_classes = [IsAuthenticated,IsTeacherOrAdmin]
     def get(self, request):
         print("Current User:", request.user)
@@ -200,6 +201,42 @@ class AssignmentQuestionDetailAPIView(APIView):
             return Response({"msg":"this teacher cannot delete"}, status=404)
         question.delete()
         return Response({"msg":"question is deleted"})
+
+class AssignmentListCreate(APIView):
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
+    permission_classes = [IsAuthenticated, IsTeacherOrAdmin]
+
+    def get(self, request):
+        user_now = request.user
+        if user_now.role == 'teacher':
+            assignments = Assignment.objects.filter(teacher = user_now)
+        elif user_now.role == "admin":
+            assignments = Assignment.objects.all()
+        else:
+            return Response({"msg":"You are not authenticated to see the assignments"}, 403)
+
+
+        paginator = PageNumberPagination()
+        paginator.page_size = 3
+        result_page = paginator.paginate_queryset(assignments, request)
+
+        serializer = AssignmentSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+    def post(self,request):
+        if not request.user:
+            return Response({"msg":"who are you buddy"})
+        if request.user.role != 'teacher':
+            return Response({"You are not allowed to create assignment"}, status=403)
+
+        serializer = AssignmentSerializer(data = request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save(teacher = request.user)
+            return Response({"msg":"assignment has been created"}, status=201)
+        return Response(serializer.errors)
+
+
 
 
 
