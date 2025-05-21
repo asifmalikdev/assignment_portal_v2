@@ -14,7 +14,7 @@ class AssignmentQuestionInline(admin.TabularInline):
 class AssignmentAdmin(admin.ModelAdmin):
     form = AssignmentForm
     inlines = [AssignmentQuestionInline]
-    list_display = ('title', 'teacher', 'assigned_class', 'due_date', 'created_at')
+    list_display = ('id','title', 'teacher', 'assigned_class', 'due_date', 'created_at')
     search_fields = ('title',)
     list_filter = ('teacher', 'assigned_class')
 

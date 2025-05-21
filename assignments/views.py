@@ -1,17 +1,11 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse, HttpResponseForbidden
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib import messages
+from django.http import HttpResponse
 from django.urls import reverse_lazy
-from django.views.generic import ListView, FormView, View
-from django.utils import timezone
+from django.views.generic import  FormView
 from rest_framework.authentication import SessionAuthentication
-from rest_framework.decorators import authentication_classes, permission_classes
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .models import Assignment, AssignmentQuestionThrough, AssignmentSubmission, StudentAnswer, AssignmentQuestion
 from .forms import AssignmentForm, AssignmentSubmissionForm
@@ -49,9 +43,6 @@ class AssignmentCreateView(LoginRequiredMixin, FormView):
 
 
 from django.views.generic import ListView
-from django.http import HttpResponseForbidden
-from django.utils import timezone
-from .models import Assignment
 
 class StudentAssignmentListView(ListView):
     model = Assignment
@@ -203,7 +194,7 @@ class AssignmentQuestionDetailAPIView(APIView):
         return Response({"msg":"question is deleted"})
 
 class AssignmentListCreate(APIView):
-    authentication_classes = [JWTAuthentication, SessionAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherOrAdmin]
 
     def get(self, request):
@@ -236,8 +227,54 @@ class AssignmentListCreate(APIView):
             return Response({"msg":"assignment has been created"}, status=201)
         return Response(serializer.errors)
 
+class AssignmentDetailView(APIView):
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
+    permission_classes=[IsAuthenticated, IsTeacherOrAdmin]
 
+    def get_object(self, pk):
+        return get_object_or_404(Assignment, pk=pk)
 
+    def get(self, request, pk):
+        print(request.user)
+        id = pk
+        assignment = self.get_object(id)
+        if assignment.teacher != request.user:
+            return Response({"msg":"Access Denied for this teacher"}, status=403)
+        if not assignment:
+            return Response({"msg":"No Assignment with this Id"}, status=403)
+        serializer = AssignmentSerializer(assignment)
+        return Response(serializer.data)
+    def put(self, request, pk):
+        if not request.user:
+            return Response({"msg":"Who are you buddy"})
+        if request.user.role != 'teacher':
+            return Response({"msg":"You are not authenticate to Update this assignment"})
+
+        id = pk
+        assignment = self.get_object(id)
+        if not assignment:
+            return Response({"could not find assignmet"})
+
+        serializer = AssignmentSerializer(assignment, data = request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"msg":"Assignment has been updated"}, status=200)
+        return Response(serializer.errors)
+    def delete(self, request, pk):
+        if not request.user:
+            return Response({"msg":"User Required"}, status = 403)
+        if request.user.role != "teacher":
+            return Response({"msg":"Only Teacher can perform delete operations"}, status=403)
+        id = pk
+        assignment = self.get_object(id)
+        if not assignment:
+            return Response({"msg":"We could not find any assignment"}, status=404)
+
+        if assignment.teacher != request.user:
+            return Response({"You are not authorised to delete this assignment"}, status = 403)
+
+        assignment.delete()
+        return Response({"msg":"Record Delted"}, status=204)
 
 
 
