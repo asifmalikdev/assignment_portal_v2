@@ -149,6 +149,6 @@ num = {
     "title": "Final Exam",
     "description": "Math exam assignment",
     "due_date": "2025-06-01T12:00:00Z",
-    "assigned_class": 1,
-    "questions": [1, 2, 3]
+    "assigned_class": 9,
+    "questions": [5,8,9]
 }

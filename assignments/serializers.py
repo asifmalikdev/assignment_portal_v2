@@ -45,13 +45,13 @@ class AssignmentSerializer(serializers.ModelSerializer):
         class_ = data.get("assigned_class")
         questions = data.get("questions")
         for question in questions:
-            print("this question is for class : ",question.assigned_class)
-        # for question in questions:
-        #     print("question : ", question.id)
-        # print("questions in serializer: ",questions)
-        # print(class_)
+            if question.teacher != request.user:
+                raise ValidationError(f"Question '{question}' is not from this teacer book")
+            if question.assigned_class != class_:
+                raise ValidationError(f"Question '{question}' is not for the current '{class_}' but for {question.assigned_class}")
+            print("Question Class: ",question.assigned_class, "\nClass : ", class_)
         if class_.assigned_teacher != request.user:
             raise ValidationError("This teacher is not teaching to this class")
-        print("data : ",data, "\nUser : ", user, "class assign is being assigned to : ", class_)
+        # print("data : ",data, "\nUser : ", user, "class assign is being assigned to : ", class_)
 
         return data
