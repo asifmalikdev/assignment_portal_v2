@@ -49,7 +49,6 @@ class AssignmentSerializer(serializers.ModelSerializer):
                 raise ValidationError(f"Question '{question}' is not from this teacer book")
             if question.assigned_class != class_:
                 raise ValidationError(f"Question '{question}' is not for the current '{class_}' but for {question.assigned_class}")
-            print("Question Class: ",question.assigned_class, "\nClass : ", class_)
         if class_.assigned_teacher != request.user:
             raise ValidationError("This teacher is not teaching to this class")
         # print("data : ",data, "\nUser : ", user, "class assign is being assigned to : ", class_)

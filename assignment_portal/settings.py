@@ -64,7 +64,10 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': '30/hour',  # 10 requests per minute for anonymous users
         'user': '50/hour',  # 100 requests per day for authenticated users
-    }
+    },
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+
 }
 
 LOGIN_URL = "/"

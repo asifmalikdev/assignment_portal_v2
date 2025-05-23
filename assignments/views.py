@@ -5,12 +5,14 @@ from django.views.generic import  FormView
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
+from rest_framework.status import HTTP_204_NO_CONTENT
 from rest_framework.views import APIView
-
 from .models import Assignment, AssignmentQuestionThrough, AssignmentSubmission, StudentAnswer, AssignmentQuestion
 from .forms import AssignmentForm, AssignmentSubmissionForm
 from .serializers import AssignmentQuestionSerializer, AssignmentSerializer
+from rest_framework import status
 
+from assignment_portal.constant import UserRole
 
 class AssignmentCreateView(LoginRequiredMixin, FormView):
     login_url = "/"
@@ -120,163 +122,132 @@ class AssignmentSubmitView(View):
 
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
-from users.permissions import IsTeacherOrAdmin
+from users.permissions import IsTeacherOrAdmin, IsTeacherUser
 
 
 class AssignmentQuestionListCreateAPIView(APIView):
     authentication_classes = [JWTAuthentication, SessionAuthentication]
-    permission_classes = [IsAuthenticated,IsTeacherOrAdmin]
-    def get(self, request):
-        print("Current User:", request.user)
-        print("Is Authenticated:", request.user.is_authenticated)
-        print("Role:", getattr(request.user, 'role', 'no role'))
-        if not request.user:
-            return Response({"msg":"we haven't got any user"})
-
-        if request.user.role =="teacher":
-            question_book = AssignmentQuestion.objects.filter(teacher = request.user)
-        elif request.user.role == "admin":
-            question_book = AssignmentQuestion.objects.all()
-        else:
-            return Response({"msg":"you are not allowed to see this"}, status=403)
-
-
-
-        paginator = PageNumberPagination()
-        paginator.page_size = 3
-        result_page = paginator.paginate_queryset(question_book, request)
-
-
-        serializer = AssignmentQuestionSerializer(result_page, many=True)
-
-        return paginator.get_paginated_response(serializer.data)
-
-    def post(self, request):
-        if request.user.role != "teacher":
-            return Response({"msg":"only teacher can post a question"}, status=403)
-
-        serializer = AssignmentQuestionSerializer(data = request.data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save(teacher = request.user)
-            return Response({"msg", "new question is added"}, status=201)
-        return Response(serializer.errors)
-
-
-class AssignmentQuestionDetailAPIView(APIView):
-    authentication_classes= [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self, pk):
-        return get_object_or_404(AssignmentQuestion, pk=pk)
-    def get(self,request, pk):
-        question=self.get_object(pk)
-        if not question:
-            return Response({"msg":"question not found "}, status=404)
-        serializer = AssignmentQuestionSerializer(question)
-        return Response(serializer.data)
-    def put(self, request, pk):
-        question = self.get_object(pk)
-        if not question:
-            return Response({"msg":"can't find question to update"}, status=404)
-        if question.teacher != request.user:
-            return Response({"msg":"this teacher is not allowed to update"})
-        serializer = AssignmentQuestionSerializer(question, data = request.data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"msg":"data is updated in db"})
-        return Response(serializer.error)
-
-    def delete(self, request, pk):
-        question = self.get_object(pk)
-        if question.teacher != request.user:
-            return Response({"msg":"this teacher cannot delete"}, status=404)
-        question.delete()
-        return Response({"msg":"question is deleted"})
-
-class AssignmentListCreate(APIView):
-    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsTeacherOrAdmin]
 
     def get(self, request):
-        user_now = request.user
-        if user_now.role == 'teacher':
-            assignments = Assignment.objects.filter(teacher = user_now)
-        elif user_now.role == "admin":
-            assignments = Assignment.objects.all()
+        user = request.user
+        if user.role == UserRole.TEACHER.value:
+            question_book = AssignmentQuestion.objects.filter(teacher=user)
+        elif user.role == UserRole.ADMIN.value:
+            question_book = AssignmentQuestion.objects.all()
         else:
-            return Response({"msg":"You are not authenticated to see the assignments"}, 403)
-
+            return Response({"msg": "Permission denied, insufficient role"}, status=status.HTTP_403_FORBIDDEN)
 
         paginator = PageNumberPagination()
-        paginator.page_size = 3
-        result_page = paginator.paginate_queryset(assignments, request)
-
-        serializer = AssignmentSerializer(result_page, many=True)
-
+        result_page = paginator.paginate_queryset(question_book, request)
+        serializer = AssignmentQuestionSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
-    def post(self,request):
-        if not request.user:
-            return Response({"msg":"who are you buddy"})
-        if request.user.role != 'teacher':
-            return Response({"You are not allowed to create assignment"}, status=403)
+    def post(self, request):
+        if request.user.role != UserRole.TEACHER.value:
+            return Response({"msg": "Only teachers can post questions"}, status=status.HTTP_403_FORBIDDEN)
 
-        serializer = AssignmentSerializer(data = request.data, context={'request': request})
+        serializer = AssignmentQuestionSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save(teacher = request.user)
-            return Response({"msg":"assignment has been created"}, status=201)
-        return Response(serializer.errors)
+            serializer.save(teacher=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class AssignmentQuestionDetailAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsTeacherUser]
+
+    def get(self, request, pk):
+        question = get_object_or_404(AssignmentQuestion, pk=pk)
+        serializer = AssignmentQuestionSerializer(question)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        question = get_object_or_404(AssignmentQuestion, pk=pk)
+        if question.teacher != request.user:
+            return Response({"msg": "You are not authorized to update this question."}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = AssignmentQuestionSerializer(question, data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"msg": "Data has been successfully updated."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        question = get_object_or_404(AssignmentQuestion, pk=pk)
+        if question.teacher != request.user:
+            return Response({"msg": "You are not authorized to delete this question."}, status=status.HTTP_403_FORBIDDEN)
+
+        question.delete()
+        return Response({"msg": "Question deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+
+
+
+class AssignmentListCreate(APIView):
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
+    permission_classes = [IsAuthenticated, IsTeacherOrAdmin]
+
+    def get(self, request):
+        user = request.user
+        if user.role == UserRole.TEACHER.value:
+            assignments = Assignment.objects.filter(teacher=user)
+        elif user.role == UserRole.ADMIN.value:
+            assignments = Assignment.objects.all()
+        else:
+            return Response({"msg": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+
+        paginator = PageNumberPagination()
+        result_page = paginator.paginate_queryset(assignments, request)
+        serializer = AssignmentSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+    def post(self, request):
+        if request.user.role != UserRole.TEACHER.value:
+            return Response({"msg": "Only teachers can create assignments"}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = AssignmentSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save(teacher=request.user)
+            return Response({"msg": "Assignment has been created"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class AssignmentDetailView(APIView):
     authentication_classes = [JWTAuthentication, SessionAuthentication]
-    permission_classes=[IsAuthenticated, IsTeacherOrAdmin]
-
-    def get_object(self, pk):
-        return get_object_or_404(Assignment, pk=pk)
+    permission_classes = [IsAuthenticated, IsTeacherOrAdmin]
 
     def get(self, request, pk):
-        print(request.user)
-        id = pk
-        assignment = self.get_object(id)
+        assignment = get_object_or_404(Assignment, pk=pk)
         if assignment.teacher != request.user:
-            return Response({"msg":"Access Denied for this teacher"}, status=403)
-        if not assignment:
-            return Response({"msg":"No Assignment with this Id"}, status=403)
+            return Response({"msg": "Access denied for this teacher"}, status=status.HTTP_403_FORBIDDEN)
+
         serializer = AssignmentSerializer(assignment)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     def put(self, request, pk):
-        if not request.user:
-            return Response({"msg":"Who are you buddy"})
-        if request.user.role != 'teacher':
-            return Response({"msg":"You are not authenticate to Update this assignment"})
+        if request.user.role != UserRole.TEACHER.value:
+            return Response({"msg": "You are not authorized to update assignments"}, status=status.HTTP_403_FORBIDDEN)
 
-        id = pk
-        assignment = self.get_object(id)
-        if not assignment:
-            return Response({"could not find assignmet"})
+        assignment = get_object_or_404(Assignment, pk=pk)
+        if assignment.teacher != request.user:
+            return Response({"msg": "Access denied for this assignment"}, status=status.HTTP_403_FORBIDDEN)
 
-        serializer = AssignmentSerializer(assignment, data = request.data, context={'request': request})
+        serializer = AssignmentSerializer(assignment, data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
-            return Response({"msg":"Assignment has been updated"}, status=200)
-        return Response(serializer.errors)
-    def delete(self, request, pk):
-        if not request.user:
-            return Response({"msg":"User Required"}, status = 403)
-        if request.user.role != "teacher":
-            return Response({"msg":"Only Teacher can perform delete operations"}, status=403)
-        id = pk
-        assignment = self.get_object(id)
-        if not assignment:
-            return Response({"msg":"We could not find any assignment"}, status=404)
+            return Response({"msg": "Assignment has been updated"}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def delete(self, request, pk):
+        if request.user.role != UserRole.TEACHER.value:
+            return Response({"msg": "Only teachers can delete assignments"}, status=status.HTTP_403_FORBIDDEN)
+
+        assignment = get_object_or_404(Assignment, pk=pk)
         if assignment.teacher != request.user:
-            return Response({"You are not authorised to delete this assignment"}, status = 403)
+            return Response({"msg": "You are not authorized to delete this assignment"}, status=status.HTTP_403_FORBIDDEN)
 
         assignment.delete()
-        return Response({"msg":"Record Delted"}, status=204)
-
-
-
+        return Response({"msg": "Assignment deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 
