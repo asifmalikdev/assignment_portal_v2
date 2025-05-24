@@ -1,5 +1,5 @@
 from statistics import multimode
-
+import pdb
 from numpy.ma.core import negative
 
 
@@ -188,7 +188,68 @@ class Solution():
             else:
                 index+=1
         print(index)
+    def mySqrt(self, s):
 
+        if s < 2:
+            return s
+        left, right = 1, s // 2
+        while left <= right:
+
+            mid = (left + right) // 2
+            print(left, ", ", mid, ", ", right)
+            if mid * mid == s:
+                return mid
+            elif mid * mid < s:
+                left = mid + 1
+            else:
+                right = mid - 1
+        return right
+
+
+
+
+
+
+
+        # print(s//2)
+        # ans,res=0,0
+        # while res <=s:
+        #     print("hello")
+        #     res = ans*ans
+        #     if res > s:
+        #         break
+        #     ans +=1
+        # print(ans-1)
+
+    def climbStairs(self, n):
+        if n <= 2:
+            return n
+        b=2
+        a=1
+        for i in range(3,n+1):
+
+            a,b = b, a+b
+        return b
+
+
+    def merge(self, num1, m, num2, n):
+        j= m-1
+        k = n-1
+        i = m+n-1
+        while j >= 0 and k>=0:
+            if num1[j]>num2[k]:
+                num1[i]=num1[j]
+                j-=1
+            else:
+                num1[i]=num2[k]
+                k-=1
+            i-=1
+        while k>=0:
+            num1[i]=num2[k]
+            i-=1
+            k-=1
+
+        print(num1)
 
 
 
@@ -197,7 +258,12 @@ class Solution():
 
 obj = Solution()
 # obj.convert("paypalishiring", 3)
-obj.lengthOfLastWord("hwllo wolrd you are gone world ")
+# obj.lengthOfLastWord("hwllo wolrd you are gone world ")
+# print(obj.mySqrt(80))
+# print(obj.climbStairs(4))
+obj.merge([1,2,3,0,0,0], 3, [2,5,6],3 )
+
+
 
 #
 # import sys
