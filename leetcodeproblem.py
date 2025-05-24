@@ -154,23 +154,40 @@ num = {
 }
 class Solution():
     def convert(self, s, n):
-        temp = 0
+        if n ==  s:
+            return s
+
         new_list = ""
-        for i in range(n):
-            while temp<len(s):
-                new_list= new_list+s[temp]
-                temp +=(2*n)-2
+        for i in range(0, len(s), 2*n - 2):
+            new_list += s[i]
+
+        for row in range(1,n-1):
+            i = row
+            while i < len(s):
+                new_list = new_list+s[i]
+                diag = i + (2*n - 2 - 2*row)
+                if diag < len(s):
+                    new_list = new_list+s[diag]
+                i = i+ (2*n)-2
+        for i in range(n - 1, len(s), 2 * n - 2):
+            new_list += s[i]
+
+        return new_list
 
 
 
+    def lengthOfLastWord(self, s):
+        index=0
+        s=s.strip()
+        print(s)
+        for i in range(len(s)-1,-1,-1):
+            if s[i] == " ":
+                print("inside if",index)
+                break
 
-        print("new list",new_list)
-
-
-
-
-
-
+            else:
+                index+=1
+        print(index)
 
 
 
@@ -179,7 +196,8 @@ class Solution():
 
 
 obj = Solution()
-obj.convert("paypalishiring", 3)
+# obj.convert("paypalishiring", 3)
+obj.lengthOfLastWord("hwllo wolrd you are gone world ")
 
 #
 # import sys
