@@ -148,15 +148,3 @@ class StudentAnswer(models.Model):
         return f"{self.submission.student.full_name} - Q: {self.question.text}"
 
 
-
-
-
-
-
-
-
-
-
-
-
-

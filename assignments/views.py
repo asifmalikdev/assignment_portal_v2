@@ -250,4 +250,3 @@ class AssignmentDetailView(APIView):
         assignment.delete()
         return Response({"msg": "Assignment deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-
