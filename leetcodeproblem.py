@@ -261,7 +261,7 @@ obj = Solution()
 # obj.lengthOfLastWord("hwllo wolrd you are gone world ")
 # print(obj.mySqrt(80))
 # print(obj.climbStairs(4))
-obj.merge([1,2,3,0,0,0], 3, [2,5,6],3 )
+# obj.merge([1,2,3,0,0,0], 3, [2,5,6],3 )
 
 
 
@@ -296,3 +296,62 @@ obj.merge([1,2,3,0,0,0], 3, [2,5,6],3 )
 # # print("list per index size", sys.getsizeof(my_list))
 # # print("array per index size", sys.getsizeof(my_array))
 # #
+
+
+data = {
+    "name": "Asif",
+    "age": 23,
+    "email": "asif@example.com",
+    "city": "Lahore",
+    "is_active": True,
+    'marks': [85, 90, 78],
+    "skills": ["Python", "Django", "DRF"],
+    "profile_complete": False,
+    "rating": 4.7,
+    "projects": {"portfolio": "Live", "cms": "Pending"}
+}
+print(data)
+data["projects"]["cms"] = "Completed"
+print(data)
+# data["rating"][4.7]=5.7
+# print(data)
+
+
+# avg = sum(data["marks"])/3
+# print(avg)
+# print(data)
+# data.pop("rating", None)
+# print(data)
+# i=0
+# for key in data:
+#     i+=1
+# print(i)
+# print(data)
+# for key, value in data:
+#     print(key, value)
+# for key, value in data:
+#     print(f"{key}: {value}")
+# def greet(**kwargs):
+#     print("Hello", kwargs)
+#
+#
+# greet(**data)
+# print(type(data), data)
+# import json
+# json_string= json.dumps(data)
+# print(type(json_string), json_string)
+# data2 = json.loads(json_string)
+# print(type(data2), data2)
+
+lis = [1,2,3,4]
+print(lis[::-1])
+print(lis)
+print(lis[3::-1])
+
+# lis = [1,2,3,4]
+# b = len(lis)-1
+# for x in range(b):
+#     for y in range(b):
+#         lis[y]=lis[y+1]
+#
+# print(lis)
