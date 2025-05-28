@@ -343,10 +343,10 @@ print(data)
 # data2 = json.loads(json_string)
 # print(type(data2), data2)
 
-lis = [1,2,3,4]
-print(lis[::-1])
-print(lis)
-print(lis[3::-1])
+# lis = [1,2,3,4]
+# print(lis[::-1])
+# print(lis)
+# print(lis[3::-1])
 
 # lis = [1,2,3,4]
 # b = len(lis)-1
@@ -355,3 +355,16 @@ print(lis[3::-1])
 #         lis[y]=lis[y+1]
 #
 # print(lis)
+
+class Solution():
+    def palidrome(self, x):
+        temp =0
+        if x<0:
+            return False
+        while x>0:
+            temp= temp * 10 + x%10
+            x//=10
+        
+
+obj = Solution()
+print(obj.palidrome(121))

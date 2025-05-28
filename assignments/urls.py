@@ -3,7 +3,7 @@ from .views import (
     AssignmentCreateView,
     StudentAssignmentListView,
     AssignmentSubmitView, AssignmentQuestionListCreateAPIView, AssignmentQuestionDetailAPIView, AssignmentListCreate,
-    AssignmentDetailView, StudentAssignmentListAPIView
+    AssignmentDetailView, StudentAssignmentListApiView
 )
 
 urlpatterns = [
@@ -14,5 +14,5 @@ urlpatterns = [
     path('assignment-questions/<int:pk>/', AssignmentQuestionDetailAPIView.as_view(), name='assignment-question-list-create'),
     path('assignments/', AssignmentListCreate.as_view(), name = "assignment-list-create"),
     path("assignments/<int:pk>/", AssignmentDetailView.as_view(), name = "assignment-detail"),
-    path("StudentAssignmentListAPIView/", StudentAssignmentListAPIView.as_view(), name = "StudentAssignmentListAPIView" ),
+    path("StudentAssignmentListApiView/", StudentAssignmentListApiView.as_view(), name = "StudentAssignmentListAPIView" ),
 ]

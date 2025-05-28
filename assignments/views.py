@@ -250,3 +250,30 @@ class AssignmentDetailView(APIView):
         assignment.delete()
         return Response({"msg": "Assignment deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
+from .serializers import StudentAssignmentListSerializer
+
+class StudentAssignmentListApiView(APIView):
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        if user.role != UserRole.STUDENT.value:
+            return Response({"msg": "Only students can access this view."}, status=403)
+
+        assignments = Assignment.objects.filter(
+            assigned_class__students=user,
+            due_date__gte=timezone.now()
+        ).order_by("due_date")
+
+        data = []
+        for assignment in assignments:
+            serializer = StudentAssignmentListSerializer(assignment)
+            has_submitted = AssignmentSubmission.objects.filter(student=user, assignment=assignment).exists()
+            data.append({
+                **serializer.data,
+                "has_submitted": has_submitted
+            })
+
+        return Response(data, status=200)

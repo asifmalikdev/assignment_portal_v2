@@ -1,6 +1,4 @@
 from rest_framework.exceptions import ValidationError
-from urllib3 import request
-
 from .models import AssignmentQuestion, Assignment
 from rest_framework import serializers
 
@@ -51,6 +49,11 @@ class AssignmentSerializer(serializers.ModelSerializer):
                 raise ValidationError(f"Question '{question}' is not for the current '{class_}' but for {question.assigned_class}")
         if class_.assigned_teacher != request.user:
             raise ValidationError("This teacher is not teaching to this class")
-        # print("data : ",data, "\nUser : ", user, "class assign is being assigned to : ", class_)
 
         return data
+
+
+class StudentAssignmentListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Assignment
+        fields = ['id', 'title', 'description', 'due_date', 'assigned_class']
