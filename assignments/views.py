@@ -1,4 +1,6 @@
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.mail import send_mail
 from django.http import HttpResponse
 from django.urls import reverse_lazy
 from django.views.generic import  FormView
@@ -203,13 +205,16 @@ class AssignmentListCreate(APIView):
         serializer = AssignmentSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
+
     def post(self, request):
         if request.user.role != UserRole.TEACHER.value:
             return Response({"msg": "Only teachers can create assignments"}, status=status.HTTP_403_FORBIDDEN)
 
         serializer = AssignmentSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save(teacher=request.user)
+
+            assignment = serializer.save(teacher=request.user)
+
             return Response({"msg": "Assignment has been created"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -277,3 +282,36 @@ class StudentAssignmentListApiView(APIView):
             })
 
         return Response(data, status=200)
+
+from rest_framework.generics import RetrieveAPIView
+from .serializers import StudentAssignmentDetailSerializer
+
+class StudentAssignmentDetailApiView(RetrieveAPIView):
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        user = request.user
+
+        if user.role != UserRole.STUDENT.value:
+            return Response({"msg": "Only students can access this view."}, status=403)
+
+        assignment = get_object_or_404(
+            Assignment,
+            pk=pk,
+            assigned_class__students=user
+        )
+
+        serializer = StudentAssignmentDetailSerializer(assignment)
+
+        submission = AssignmentSubmission.objects.filter(student=user, assignment=assignment).first()
+
+        return Response({
+            "assignment": serializer.data,
+            "has_submitted": submission is not None,
+            "submission": {
+                "id": submission.id,
+                "submitted_at": submission.submitted_at,
+                "file_url": submission.file.url if submission and submission.file else None
+            } if submission else None
+        }, status=200)

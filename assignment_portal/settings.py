@@ -38,11 +38,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'users',
-    'assignments',
+    'assignments.apps.AssignmentsConfig',
     'core',
     'crispy_forms',
     'school',
     'rest_framework',
+
 ]
 
 REST_FRAMEWORK = {
@@ -172,3 +173,12 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
     'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
 }
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'djangop287@gmail.com'  # Replace with your Gmail
+EMAIL_HOST_PASSWORD = 'qxce wppj xkrr erke'  # Use App Password (not your normal Gmail password)
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+ADMIN_EMAIL = 'asifhameed8944@gmail.com'  # Replace with the admin's email to receive form data

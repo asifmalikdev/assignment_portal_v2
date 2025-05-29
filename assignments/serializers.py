@@ -54,6 +54,20 @@ class AssignmentSerializer(serializers.ModelSerializer):
 
 
 class StudentAssignmentListSerializer(serializers.ModelSerializer):
+    questions = AssignmentQuestionSerializer(many=True)
     class Meta:
         model = Assignment
-        fields = ['id', 'title', 'description', 'due_date', 'assigned_class']
+        fields = ['id', 'title', 'description', 'due_date', 'assigned_class', "questions"]
+
+
+class AssignmentQuestionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AssignmentQuestion
+        fields = ['id', 'text','question_type' ]
+
+class StudentAssignmentDetailSerializer(serializers.ModelSerializer):
+    questions = AssignmentQuestionSerializer(many=True)
+    class Meta:
+        model = Assignment
+        # fields = ['id', 'title', 'description', 'due_date', 'assigned_class', 'questions']
+        fields = "__all__"
