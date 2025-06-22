@@ -310,9 +310,9 @@ data = {
     "rating": 4.7,
     "projects": {"portfolio": "Live", "cms": "Pending"}
 }
-print(data)
-data["projects"]["cms"] = "Completed"
-print(data)
+# print(data)
+# data["projects"]["cms"] = "Completed"
+# print(data)
 # data["rating"][4.7]=5.7
 # print(data)
 
@@ -365,6 +365,22 @@ class Solution():
             temp= temp * 10 + x%10
             x//=10
         
+#
+# obj = Solution()
+# print(obj.palidrome(121))
+import pdb; pdb.set_trace()  # 🚨 Debugger starts immediately
 
-obj = Solution()
-print(obj.palidrome(121))
+def decorator(func):
+    def wrapper(*args, **kwargs):
+        pdb.set_trace()
+        print("before parent")
+        func(*args, **kwargs)
+        print("after parent")
+    return wrapper
+
+@decorator
+def add(x, y):
+    print("x, y inside add:", x, y)
+    print("x + y =", x + y)
+
+add(1, 2)
