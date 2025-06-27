@@ -13,11 +13,9 @@ class UserLoginForm(forms.Form):
     def clean(self):
         email = self.cleaned_data.get('email')
         password = self.cleaned_data.get('password')
-        print(email)
-        print(password)
+        
         if email and password:
             user = authenticate(email=email, password=password)  # ✅ fix authenticate to use 'email'
-            print(user)
             if user is None:
                 raise forms.ValidationError("Invalid email or password")
             if not user.is_active:
@@ -27,6 +25,37 @@ class UserLoginForm(forms.Form):
 
     def get_user(self):
         return self.user
+
+class UserSignupForm(forms.ModelForm):
+    password = forms.ChartField(widget=forms.PasswordInput)
+    password_confirm = forms.ChartField(widget=forms.PasswordInput)
+    Role_CHOICES = [
+        ('admin', 'Admin'),
+        ('teacher', 'Teacher'),
+        ('student', 'Student'),
+    ]
+    role = forms.ChoiceField(choices=Role_CHOICES)
+    class Meta:
+        model = User
+        fields = ["email", "name","password", "password_confirm", "role"]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get("password")
+        password_confirm = cleaned_data.get("password_confirm")
+
+        if password and password_confirm and password != password_confirm:
+            raise forms.ValidationError("Passoword do not match")
+        return cleaned_data
+    
+    def save(self, commit = True):
+        user = super().save(commit = False)
+        user.set_password(self.cleaned_data['password'])
+        user.role = self.cleaned_data['role']
+        if commit:
+            user.save()
+        return user
+
 
 
 class TeacherSignupForm(forms.ModelForm):
